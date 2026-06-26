@@ -1,0 +1,16 @@
+{
+  "name": "llm-visibility-certification",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Free public certification platform for the LLM Visibility™ brand",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
