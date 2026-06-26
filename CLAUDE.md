@@ -54,5 +54,11 @@ Key routing rules:
 
 ## Status
 
-Greenfield. Repo initialized 2026-06-26. Next: `/gstack-office-hours` to shape the
-certification product before any code.
+2026-06-26: planning loop complete (office-hours → design → plan-eng-review, all APPROVED/
+CLEAR). Building in pieces. **Piece 1 shipped: deterministic scorer `lib/scorer` (17 tests
+green).** Repo local-only; not yet pushed to GitHub or linked to Vercel.
+
+**Resume:** read `HANDOFF.md` first, then `docs/IMPLEMENTATION-PLAN.md`. Next piece =
+finish Phase 0 (CLI + Firecrawl adapter + calibration) OR Phase 1a (Next.js + Supabase +
+audit pipeline). Matt's book goes in `.private/` (gitignored). Keep using gstack:
+`/gstack-context-restore`, build, `/gstack-review`, `/gstack-ship`.

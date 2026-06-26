@@ -42,3 +42,6 @@ Thumbs.db
 # Misc
 *.pem
 .turbo
+
+# Private / IP — Matt's book + any copyrighted source material (NEVER commit)
+.private/
