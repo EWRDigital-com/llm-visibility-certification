@@ -18,8 +18,9 @@ Pro credential) is a hard Phase-2 gate, deferred.
 ## Current state (git `main`)
 - `532b1a0` foundation (README, .gitignore, CLAUDE.md)
 - `f76e081` locked implementation plan
-- `90cd2ce` **Phase 0 / T1 core: deterministic scorer `lib/scorer` + 17 passing tests**
-- Scorer is DONE and green (`npm test` → 17/17, `npx tsc --noEmit` clean). Node v24, npm 11.
+- `90cd2ce` Phase 0 / T1 core: deterministic scorer `lib/scorer` (original 7 flat categories)
+- `02c0071` **Pillar reframe: 3 scored pillars + eligibility gate + bottleneck + capped maturity rung**
+- Scorer is DONE and green (`npm test` → 34/34, `npx tsc --noEmit` clean). Node v24, npm 11.
 - Repo is local only — NOT yet pushed to GitHub, NOT yet linked to Vercel.
 
 ## Resume protocol (gstack-native)
@@ -27,7 +28,11 @@ Pro credential) is a hard Phase-2 gate, deferred.
 2. The newest checkpoint at `~/.gstack/projects/llmvisibilitycertification.com/checkpoints/` is read by gstack's context-recovery on the next skill run (or run `/gstack-context-restore`).
 3. The loop continues: build a piece → `/gstack-review` before committing → `/gstack-ship` when a phase is shippable. For new sub-features, `/gstack-plan-eng-review` against the plan first.
 
-## ⚠ Methodology reconciliation — do this FIRST next session
+## ✅ Methodology reconciliation — steps 1-3 DONE (commit 02c0071, 2026-06-27)
+Steps 1-3 shipped: pillar roll-up (Foundation/Validation/Ingestion), eligibility gate, weighted
+composite, bottleneck, capped maturity rung, off-domain roadmap. **Remaining = step 4** (reweight
+against `.private/rubric-source-digest.md` + calibration) — blocked on the calibration site list.
+Scoring contract pinned in decision `bf33c01e` (cert tier headline; rung capped at Recognized).
 The book defines a richer model than the v1 on-page scorer. Reconcile before tuning weights.
 - **The Stack (5 causal layers):** Foundation (trademark/entity anchors) · Engine (content & PR mentions) · Validation (analyst/academic citations) · Ingestion (LLM training inputs) · Impact (market adoption).
 - **The Four Pillars (the scoreboard):** Search Mentions · LLM Surfacing · Authority Trust · Citations Consistency.
@@ -35,7 +40,7 @@ The book defines a richer model than the v1 on-page scorer. Reconcile before tun
 - **Biggest levers are OFF-DOMAIN** (third-party mention footprint, cross-web entity consistency, authority citations, LLM surfacing via prompt suites). The v1 scorer (`lib/scorer`) is **on-page-only** — it faithfully covers the Foundation/Ingestion on-page subset (schema, sameAs/entity, answer-formatting, freshness, on-page citations) but CANNOT see off-domain pillars from one URL.
 - Book **omits llms.txt and named bots** (GPTBot/ClaudeBot). Don't over-weight crawler mechanics; don't reward llms.txt as if the book backs it. (Crawler-access is still a real eligibility gate, just keep it light per the source.)
 
-**DECISION: A — LOCKED 2026-06-26.** v1 scores the **on-page subset only** (honest, deterministic, free, single-URL), reframed into the book's pillar language with a **bottleneck + maturity-ladder** readout; off-domain pillars shown as a **roadmap**, not scored in v1. Execute next session (don't re-decide):
+**DECISION: A — LOCKED 2026-06-26.** v1 scores the **on-page subset only** (honest, deterministic, free, single-URL), reframed into the book's pillar language with a **bottleneck + maturity-ladder** readout; off-domain pillars shown as a **roadmap**, not scored in v1. **Steps 1-3 shipped 2026-06-27 (commit 02c0071); only step 4 (reweight + calibration) remains, blocked on the calibration set.** Steps as executed:
 
 1. Refactor `lib/scorer` to roll the 7 on-page criteria up into the book's pillars (on-page slice of each):
    - **Foundation** ← schema (Org/Person), sameAs/entity linking, brand signals.
@@ -49,7 +54,7 @@ The book defines a richer model than the v1 on-page scorer. Reconcile before tun
 The scorer built this session is the on-page component — reused, re-labelled, not rebuilt.
 
 ## Next pieces (build in order; pick one per session)
-1. **Finish Phase 0** — `scripts/score-url.ts` CLI + Firecrawl→`PageScrape` adapter + calibration harness. Then run it on the calibration set and tune weights in `lib/scorer/criteria.ts`. *(Scorer logic already done.)*
+1. **Finish Phase 0** — `scripts/score-url.ts` CLI + Firecrawl→`PageScrape` adapter + calibration harness. Then run it on the calibration set and tune weights in `lib/scorer/criteria.ts` (category maxes) + `lib/scorer/index.ts` (`PILLAR_SPECS` pillar weights + tier/rung thresholds). *(Scorer logic already done.)*
 2. **Phase 1a (lead magnet)** — Next.js (App Router + Tailwind) skeleton + Supabase schema + submit form + `/api/audit` + worker + magic-link confirm + `/report/[id]`.
 3. **Phase 1b (public credential)** — ownership verify (DNS TXT / .well-known) → `/verify/[slug]` (noindex until trusted) + static badge SVG + brand JSON-LD.
 4. **Phase 1c (hardening)** — `/methodology` (categories, NOT weights), `/privacy` + `/api/me` deletion, rate-limit + daily cap + queue, email SPF/DKIM/DMARC.
