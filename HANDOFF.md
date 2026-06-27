@@ -35,11 +35,18 @@ The book defines a richer model than the v1 on-page scorer. Reconcile before tun
 - **Biggest levers are OFF-DOMAIN** (third-party mention footprint, cross-web entity consistency, authority citations, LLM surfacing via prompt suites). The v1 scorer (`lib/scorer`) is **on-page-only** — it faithfully covers the Foundation/Ingestion on-page subset (schema, sameAs/entity, answer-formatting, freshness, on-page citations) but CANNOT see off-domain pillars from one URL.
 - Book **omits llms.txt and named bots** (GPTBot/ClaudeBot). Don't over-weight crawler mechanics; don't reward llms.txt as if the book backs it. (Crawler-access is still a real eligibility gate, just keep it light per the source.)
 
-**Decision for Matt (first thing next session):**
-- **(A, recommended for v1)** Score the on-page subset only — honest, deterministic, free, single-URL — but RE-FRAME it into the book's Stack/4-Pillar language + bottleneck output ("your weakest pillar is X"), and show the off-domain pillars as a roadmap/next-step.
-- **(B)** Expand v1 to include off-domain signals (web-wide mention scan + entity-consistency + live LLM prompt-suite surfacing). Much closer to the book, but heavier, costlier, and non-deterministic.
+**DECISION: A — LOCKED 2026-06-26.** v1 scores the **on-page subset only** (honest, deterministic, free, single-URL), reframed into the book's pillar language with a **bottleneck + maturity-ladder** readout; off-domain pillars shown as a **roadmap**, not scored in v1. Execute next session (don't re-decide):
 
-The scorer built this session is NOT wasted — it's the on-page component. It needs: category re-labelling to pillar language, and a bottleneck/maturity-ladder output layer. Use `.private/rubric-source-digest.md` as the spec.
+1. Refactor `lib/scorer` to roll the 7 on-page criteria up into the book's pillars (on-page slice of each):
+   - **Foundation** ← schema (Org/Person), sameAs/entity linking, brand signals.
+   - **Ingestion** ← answer-formatting/chunking/compressibility, freshness.
+   - **Validation** ← on-page citations / statistics / quotes.
+   - **Crawler access** = eligibility gate (keep light; do NOT over-weight; do NOT reward llms.txt — book omits both).
+2. Output a **per-pillar readiness score + the WEAKEST pillar (bottleneck)** + a maturity rung (Invisible → Recognized → Referenced → Authoritative → Default Source), computed from the on-page subset, with a clear caveat that off-domain pillars (Engine / LLM Surfacing / Authority-Mentions / Search Mentions) are NOT measured in v1.
+3. Mark off-domain pillars as a roadmap section on the report + methodology page (v1.x adds mention scan + entity-consistency + live prompt-suite surfacing).
+4. Reweight using `.private/rubric-source-digest.md` as the spec; then calibration.
+
+The scorer built this session is the on-page component — reused, re-labelled, not rebuilt.
 
 ## Next pieces (build in order; pick one per session)
 1. **Finish Phase 0** — `scripts/score-url.ts` CLI + Firecrawl→`PageScrape` adapter + calibration harness. Then run it on the calibration set and tune weights in `lib/scorer/criteria.ts`. *(Scorer logic already done.)*
