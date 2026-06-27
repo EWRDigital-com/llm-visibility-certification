@@ -1,0 +1,13 @@
+# Keep secrets + copyrighted IP off Vercel's servers (mirrors .gitignore intent)
+.private
+.env
+.env.*
+scripts/calibration
+
+# Not needed for the static placeholder deploy
+node_modules
+.git
+coverage
+dist
+.next
+*.log
