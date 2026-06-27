@@ -35,21 +35,25 @@ try {
 
 const apiKey = process.env.FIRECRAWL_API_KEY ?? "";
 
-try {
-  const scrape = await scrapeUrl(url, { apiKey });
-  const result = scoreSite(scrape);
-  if (jsonOut) {
-    console.log(JSON.stringify({ url, ...result }, null, 2));
-  } else {
-    console.log(formatReport(result, url));
+// Wrapped in an async IIFE (not top-level await) so the project can stay
+// CommonJS — which is what lets the Vercel function bundle cheerio's CJS deps.
+void (async () => {
+  try {
+    const scrape = await scrapeUrl(url, { apiKey });
+    const result = scoreSite(scrape);
+    if (jsonOut) {
+      console.log(JSON.stringify({ url, ...result }, null, 2));
+    } else {
+      console.log(formatReport(result, url));
+    }
+  } catch (e) {
+    if (e instanceof ScrapeError) {
+      console.error(`✗ Could not audit ${url}`);
+      console.error(`  ${e.message}`);
+      console.error(`  (this is a fetch failure, not a 0 score — fix access or retry)`);
+      process.exit(2);
+    }
+    console.error(`Unexpected error auditing ${url}:`, e);
+    process.exit(1);
   }
-} catch (e) {
-  if (e instanceof ScrapeError) {
-    console.error(`✗ Could not audit ${url}`);
-    console.error(`  ${e.message}`);
-    console.error(`  (this is a fetch failure, not a 0 score — fix access or retry)`);
-    process.exit(2);
-  }
-  console.error(`Unexpected error auditing ${url}:`, e);
-  process.exit(1);
-}
+})();

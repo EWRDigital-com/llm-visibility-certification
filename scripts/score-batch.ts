@@ -53,31 +53,35 @@ if (urls.length === 0) {
 const apiKey = process.env.FIRECRAWL_API_KEY ?? "";
 const rows: BatchRow[] = [];
 
-for (let i = 0; i < urls.length; i++) {
-  const url = urls[i]!;
-  process.stderr.write(`[${i + 1}/${urls.length}] ${url} ... `);
-  try {
-    const result = scoreSite(await scrapeUrl(url, { apiKey }));
-    rows.push({
-      url,
-      composite: result.composite,
-      tier: result.tier,
-      bottleneck: result.bottleneck,
-      eligible: result.eligibility.eligible,
-      maturity: result.maturity.rung,
-    });
-    process.stderr.write(`${result.composite}/100 ${result.tier}\n`);
-  } catch (e) {
-    const error = e instanceof ScrapeError ? e.message : `unexpected: ${(e as Error).message}`;
-    rows.push({ url, composite: null, tier: null, bottleneck: null, eligible: null, maturity: null, error });
-    process.stderr.write(`FAILED (${error})\n`);
+// Async IIFE (not top-level await) so the project can stay CommonJS — required
+// for the Vercel function to bundle cheerio's CJS deps without crashing.
+void (async () => {
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i]!;
+    process.stderr.write(`[${i + 1}/${urls.length}] ${url} ... `);
+    try {
+      const result = scoreSite(await scrapeUrl(url, { apiKey }));
+      rows.push({
+        url,
+        composite: result.composite,
+        tier: result.tier,
+        bottleneck: result.bottleneck,
+        eligible: result.eligibility.eligible,
+        maturity: result.maturity.rung,
+      });
+      process.stderr.write(`${result.composite}/100 ${result.tier}\n`);
+    } catch (e) {
+      const error = e instanceof ScrapeError ? e.message : `unexpected: ${(e as Error).message}`;
+      rows.push({ url, composite: null, tier: null, bottleneck: null, eligible: null, maturity: null, error });
+      process.stderr.write(`FAILED (${error})\n`);
+    }
   }
-}
 
-const csv = batchToCsv(rows);
-if (outFile) {
-  writeFileSync(outFile, csv, "utf8");
-  process.stderr.write(`\nWrote ${rows.length} rows → ${outFile}\n`);
-} else {
-  process.stdout.write(csv);
-}
+  const csv = batchToCsv(rows);
+  if (outFile) {
+    writeFileSync(outFile, csv, "utf8");
+    process.stderr.write(`\nWrote ${rows.length} rows → ${outFile}\n`);
+  } else {
+    process.stdout.write(csv);
+  }
+})();
