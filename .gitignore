@@ -45,3 +45,6 @@ Thumbs.db
 
 # Private / IP — Matt's book + any copyrighted source material (NEVER commit)
 .private/
+
+# Internal calibration tooling — hardcodes local paths + cred locations; not part of the public product
+scripts/calibration/
