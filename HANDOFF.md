@@ -24,12 +24,21 @@ Pro credential) is a hard Phase-2 gate, deferred.
 - DONE and green (`npm test` → **77/77**, `npx tsc --noEmit` clean). Node v24, npm 11. Deps added: `cheerio` (runtime), `tsx` (dev).
 - Verified end-to-end on real HTML (matthewbertram.com) — pipeline produces a coherent report, bottleneck = Ingestion.
 - **SHIPPED 2026-06-27 — GitHub + Vercel live.** Repo pushed **PUBLIC** to `EWRDigital-com/llm-visibility-certification`
-  (https://github.com/EWRDigital-com/llm-visibility-certification). Vercel project
-  `mattbertramlives-projects/llmvisibilitycertification.com` is live at https://llmvisibilitycertificationcom.vercel.app
-  (a `noindex` coming-soon placeholder = `public/index.html`; **GitHub→Vercel auto-deploy connected**, so push-to-main redeploys).
+  (https://github.com/EWRDigital-com/llm-visibility-certification).
+  **LIVE + public + indexable at https://llmvisibilitycertificationcom.vercel.app/** (note: NO dash — the dashed/dotted variants 404).
+  `public/index.html` is now the real **"What is LLM Visibility"** definitional page (answer-formatted for the AIO query; connected
+  `@graph` JSON-LD = Matt Bertram Person hub → EWR / Best SEO Podcast / book; E-E-A-T author block at bottom; trademark line shipped
+  minimal with a `TODO(Matt)` for exact legal wording). Replaced the old `noindex` placeholder 2026-06-27.
   `.private/` + `scripts/calibration/` are gitignored AND vercelignored — book, answer key, and creds are NOT published.
-  ⚠️ **At Phase 1a: delete the `vercel.json` `outputDirectory: public` override** (and the placeholder) so Next.js builds normally.
-  ⚠️ **Scorer source (incl. provisional pre-calibration weights) is now PUBLIC** — flip repo private if the weight-exposure (plan decision #7, "answer key") matters more than the public-repo Vercel-Hobby benefit.
+  - ⚠️ **GitHub→Vercel auto-deploy is NOT firing.** A `git push` to main did NOT trigger a Vercel build (verified 2026-06-27: latest
+    git-side deploy was 56m stale after a fresh push). **To deploy: `vercel deploy --prod --yes` from the project dir (CLI).** The
+    git integration is either disconnected or broken — fix it or keep deploying via CLI. (Handoff previously claimed auto-deploy worked — it doesn't.)
+  - ⚠️ **Custom domain `llmvisibilitycertification.com` is NOT yet on Vercel.** It still serves a **disposable WordPress demo**
+    (unedited "itactics" theme, behind Cloudflare). Matt confirmed disposable 2026-06-27; archived (public REST + HTML snapshot,
+    no DB access) to **private repo `EWRDigital-com/llmvisibilitycertification-wp-archive`**. **Remaining to go live on the domain:**
+    repoint Cloudflare DNS → Vercel (HIGH-RISK live-domain change; confirm who controls that Cloudflare account) + add the domain in Vercel.
+  - ⚠️ **At Phase 1a: delete the `vercel.json` `outputDirectory: public` override** (and the placeholder) so Next.js builds normally.
+  - ⚠️ **Scorer source (incl. provisional pre-calibration weights) is now PUBLIC** — flip repo private if the weight-exposure (plan decision #7, "answer key") matters more than the public-repo Vercel-Hobby benefit.
 
 ### Phase 0 architecture (pure logic / thin I/O split — mirrors the scorer)
 - `lib/scrape/robots.ts` — PURE robots.txt evaluator: `isPathAllowed(txt, botToken, path)`, longest-match (counts `*`/`$`), specific-bot beats `*`.

@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>What Is LLM Visibility? The 4 Pillars, the Maturity Ladder & How to Measure It</title>
-  <meta name="description" content="LLM Visibility is how reliably AI answer engines find, understand, and cite your brand. Here are the four pillars, the five-rung maturity ladder, and how the LLM Visibility Score measures it." />
+  <title>LLM Visibility™ Score — Free AI Citation-Readiness Audit</title>
+  <meta name="description" content="Free, instant audit of how ready any web page is to be found, understood, and cited by AI answer engines (ChatGPT, Google AI Overviews, Perplexity, Gemini, Claude). Enter a URL, get your LLM Visibility Score." />
   <link rel="canonical" href="https://llmvisibilitycertification.com/" />
-  <meta property="og:title" content="What Is LLM Visibility?" />
-  <meta property="og:description" content="How reliably AI answer engines find, understand, and cite your brand — the four pillars, the maturity ladder, and how to measure it." />
+  <meta property="og:title" content="LLM Visibility™ Score — Free AI Citation-Readiness Audit" />
+  <meta property="og:description" content="Enter a URL and get an instant, deterministic on-page audit of its readiness to be cited by AI answer engines." />
   <meta property="og:url" content="https://llmvisibilitycertification.com/" />
-  <meta property="og:type" content="article" />
+  <meta property="og:type" content="website" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -23,6 +23,18 @@
         "description": "A free, public certification measuring how well a website is set up to be found, understood, and cited by AI answer engines.",
         "founder": { "@id": "https://matthewbertram.com/#person" },
         "knowsAbout": ["LLM visibility", "generative engine optimization", "answer engine optimization", "AI search", "entity SEO"]
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://llmvisibilitycertification.com/#tool",
+        "name": "LLM Visibility Score",
+        "url": "https://llmvisibilitycertification.com/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "browserRequirements": "Requires JavaScript",
+        "description": "A free, deterministic on-page audit that scores a URL's readiness to be cited by AI answer engines, surfaces the weakest pillar, and places the page on a maturity ladder.",
+        "publisher": { "@id": "https://llmvisibilitycertification.com/#organization" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
       },
       {
         "@type": "Person",
@@ -63,86 +75,232 @@
         "url": "https://llmvisibilitycertification.com/",
         "name": "LLM Visibility Certification",
         "publisher": { "@id": "https://llmvisibilitycertification.com/#organization" }
-      },
-      {
-        "@type": "Article",
-        "@id": "https://llmvisibilitycertification.com/#article",
-        "headline": "What Is LLM Visibility?",
-        "author": { "@id": "https://matthewbertram.com/#person" },
-        "publisher": { "@id": "https://llmvisibilitycertification.com/#organization" },
-        "mainEntityOfPage": "https://llmvisibilitycertification.com/",
-        "about": ["LLM visibility", "answer engine optimization", "generative engine optimization"]
       }
     ]
   }
   </script>
   <style>
-    :root { color-scheme: dark; }
+    :root { color-scheme: dark; --amber:#f59e0b; --bg:#0a0a0a; --fg:#ededed; --muted:#9a9a9a; --line:#1f1f1f; --card:#121212; --green:#34d399; --red:#f87171; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0; background: #0a0a0a; color: #ededed;
-      font: 17px/1.7 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    .wrap { max-width: 52rem; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
-    h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 1rem; }
-    h2 { font-size: clamp(1.4rem, 4vw, 1.9rem); letter-spacing: -0.01em; margin: 2.75rem 0 0.75rem; }
-    h3 { font-size: 1.15rem; margin: 1.5rem 0 0.35rem; }
-    p, li { color: #c9c9c9; }
-    .lead { font-size: 1.2rem; color: #ededed; }
-    sup { font-size: 0.5em; vertical-align: super; }
-    a { color: #f59e0b; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    ol.ladder { counter-reset: rung; list-style: none; padding-left: 0; }
-    ol.ladder li { counter-increment: rung; padding: 0.5rem 0 0.5rem 2.5rem; position: relative; border-top: 1px solid #1f1f1f; }
-    ol.ladder li::before { content: counter(rung); position: absolute; left: 0; top: 0.55rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #1a1a1a; color: #f59e0b; display: grid; place-items: center; font-size: 0.85rem; font-weight: 700; }
-    .pillars { display: grid; gap: 1rem; grid-template-columns: 1fr; margin-top: 1rem; }
-    @media (min-width: 640px) { .pillars { grid-template-columns: 1fr 1fr; } }
-    .pillar { border: 1px solid #1f1f1f; border-radius: 12px; padding: 1rem 1.1rem; }
-    .pillar h3 { margin-top: 0; color: #ededed; }
-    .author { margin-top: 4rem; border-top: 1px solid #1f1f1f; padding-top: 1.5rem; color: #a1a1a1; font-size: 0.95rem; }
-    .author strong { color: #ededed; }
-    footer { margin-top: 2.5rem; border-top: 1px solid #1f1f1f; padding-top: 1.25rem; color: #8a8a8a; font-size: 0.82rem; }
-    .reviewed { color: #8a8a8a; font-size: 0.85rem; margin-top: 0.5rem; }
+    body { margin:0; background:var(--bg); color:var(--fg); font:17px/1.7 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .wrap { max-width:54rem; margin:0 auto; padding:3.5rem 1.25rem 5rem; }
+    h1 { font-size:clamp(2.1rem,6vw,3.2rem); line-height:1.08; letter-spacing:-0.02em; margin:0 0 .75rem; }
+    h2 { font-size:clamp(1.4rem,4vw,1.9rem); letter-spacing:-0.01em; margin:3rem 0 .75rem; }
+    h3 { font-size:1.12rem; margin:1.4rem 0 .35rem; }
+    p, li { color:#cfcfcf; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; color:var(--amber); font-weight:700; margin:0 0 .6rem; }
+    .lead { font-size:1.18rem; color:var(--fg); }
+    sup { font-size:.5em; vertical-align:super; }
+    a { color:var(--amber); text-decoration:none; } a:hover { text-decoration:underline; }
+
+    /* tool */
+    form.tool { display:flex; gap:.6rem; margin:1.5rem 0 .5rem; flex-wrap:wrap; }
+    form.tool input { flex:1 1 16rem; min-width:0; background:#0f0f0f; border:1px solid #2a2a2a; color:var(--fg); border-radius:10px; padding:.85rem 1rem; font-size:1rem; }
+    form.tool input:focus { outline:none; border-color:var(--amber); }
+    form.tool button { background:var(--amber); color:#1a1a1a; font-weight:700; border:0; border-radius:10px; padding:.85rem 1.4rem; font-size:1rem; cursor:pointer; }
+    form.tool button:disabled { opacity:.55; cursor:wait; }
+    .hint { color:var(--muted); font-size:.85rem; margin:.1rem 0 0; }
+    .status { margin:1.2rem 0; padding:.9rem 1.1rem; border-radius:10px; border:1px solid var(--line); display:none; }
+    .status.show { display:block; }
+    .status.loading { border-color:#3a3a2a; color:#e6d8a8; }
+    .status.error { border-color:#4a2a2a; color:#f3b4b4; background:#160d0d; }
+    .spin { display:inline-block; width:.9em; height:.9em; border:2px solid #5a531f; border-top-color:var(--amber); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:-.05em; margin-right:.5em; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* results */
+    #results { display:none; margin-top:1.5rem; }
+    #results.show { display:block; }
+    .scorecard { display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap; border:1px solid var(--line); background:var(--card); border-radius:14px; padding:1.25rem 1.4rem; }
+    .ring { --p:0; width:104px; height:104px; border-radius:50%; flex:0 0 auto; display:grid; place-items:center; background:conic-gradient(var(--ring,#888) calc(var(--p)*1%), #242424 0); }
+    .ring > div { width:84px; height:84px; border-radius:50%; background:var(--card); display:grid; place-items:center; flex-direction:column; }
+    .ring b { font-size:1.7rem; line-height:1; } .ring small { color:var(--muted); font-size:.7rem; }
+    .sc-meta { flex:1 1 14rem; min-width:0; }
+    .badge { display:inline-block; font-weight:700; font-size:.82rem; padding:.28rem .7rem; border-radius:999px; border:1px solid; }
+    .badge.gold { color:var(--amber); border-color:var(--amber); } .badge.certified { color:var(--green); border-color:var(--green); } .badge.none { color:var(--muted); border-color:#3a3a3a; }
+    .pill { display:inline-block; font-size:.78rem; padding:.2rem .6rem; border-radius:999px; border:1px solid; margin-top:.5rem; }
+    .pill.ok { color:var(--green); border-color:#2f5f49; } .pill.warn { color:var(--amber); border-color:#5a4a1f; } .pill.bad { color:var(--red); border-color:#5a2a2a; }
+    .sc-url { color:var(--muted); font-size:.82rem; word-break:break-all; margin:.5rem 0 0; }
+
+    .pillar { margin:1rem 0; }
+    .pillar .top { display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; }
+    .pillar .nm { font-weight:600; } .pillar .ai { color:var(--muted); font-size:.78rem; font-weight:400; }
+    .pillar .rd { font-variant-numeric:tabular-nums; color:var(--muted); }
+    .bar { height:9px; background:#242424; border-radius:999px; overflow:hidden; margin-top:.35rem; }
+    .bar > span { display:block; height:100%; border-radius:999px; background:var(--amber); }
+    .tag { font-size:.7rem; font-weight:700; color:#1a1a1a; background:var(--amber); padding:.08rem .45rem; border-radius:5px; margin-left:.5rem; vertical-align:.05em; }
+
+    details.punch { border-top:1px solid var(--line); padding:.6rem 0; }
+    details.punch summary { cursor:pointer; font-weight:600; }
+    details.punch .cat { margin:.5rem 0 .2rem; color:#dcdcdc; font-size:.95rem; }
+    details.punch ul { margin:.1rem 0 .6rem 1.1rem; } details.punch li { color:var(--muted); font-size:.9rem; }
+    .roadmap li { color:var(--muted); }
+    .caveat { color:var(--muted); font-size:.85rem; font-style:italic; }
+
+    .author { margin-top:4rem; border-top:1px solid var(--line); padding-top:1.5rem; color:#a1a1a1; font-size:.95rem; }
+    .author strong { color:var(--fg); }
+    footer { margin-top:2.5rem; border-top:1px solid var(--line); padding-top:1.25rem; color:#8a8a8a; font-size:.82rem; }
+    .pillars-grid { display:grid; gap:1rem; grid-template-columns:1fr; margin-top:1rem; }
+    @media (min-width:640px){ .pillars-grid { grid-template-columns:1fr 1fr; } }
+    .pcard { border:1px solid var(--line); border-radius:12px; padding:1rem 1.1rem; } .pcard h3 { margin-top:0; color:var(--fg); }
+    ol.ladder { counter-reset:rung; list-style:none; padding-left:0; }
+    ol.ladder li { counter-increment:rung; padding:.5rem 0 .5rem 2.5rem; position:relative; border-top:1px solid var(--line); }
+    ol.ladder li::before { content:counter(rung); position:absolute; left:0; top:.55rem; width:1.6rem; height:1.6rem; border-radius:50%; background:#1a1a1a; color:var(--amber); display:grid; place-items:center; font-size:.85rem; font-weight:700; }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <h1>What Is LLM Visibility?</h1>
-    <p class="lead">LLM visibility is how reliably AI answer engines like ChatGPT, Google AI Overviews, Perplexity, Gemini, and Claude find your brand, understand who you are, and cite you in their answers. It is the AI-era replacement for the question "do we rank?" — the new question is "do we get recalled and credited when a model answers?"</p>
+    <p class="eyebrow">Free · Instant · No signup</p>
+    <h1>LLM Visibility<sup>&trade;</sup> Score</h1>
+    <p class="lead">See how ready a page is to be found, understood, and cited by AI answer engines — ChatGPT, Google AI Overviews, Perplexity, Gemini, and Claude. Enter a URL for an instant, deterministic on-page audit.</p>
 
-    <h2>Why it is different from SEO</h2>
-    <p>Classic SEO is about <em>eligibility</em>: being crawlable, indexable, and ranked. LLM visibility is about <em>selection</em>: whether a model chooses to repeat you when it composes an answer. A page can rank on page one and still never be cited in the AI answer sitting above it. The two are related — most AI engines pull from the organic results — but they are scored differently, and the levers that win citation are not the same ones that win a blue link.</p>
+    <form class="tool" id="audit-form">
+      <input id="audit-url" type="url" inputmode="url" placeholder="https://your-site.com/page" aria-label="Page URL to audit" required />
+      <button type="submit" id="audit-btn">Run audit</button>
+    </form>
+    <p class="hint">Audits the live page (schema &amp; entity, on-page citations, answer formatting, freshness, crawler access). Takes ~10–20 seconds.</p>
 
-    <h2>The four pillars</h2>
-    <p>LLM visibility breaks into four measurable pillars. Together they answer whether you are present, understood, trusted, and credited.</p>
-    <div class="pillars">
-      <div class="pillar"><h3>Search Mentions</h3><p>How broadly you are referenced across third-party sources, not just your own site. If no one beyond your domain talks about you, a model has little to work with.</p></div>
-      <div class="pillar"><h3>LLM Surfacing</h3><p>How often and how early you appear in AI answers to category questions ("best CRM for small teams"), not just when prompted by name.</p></div>
-      <div class="pillar"><h3>Authority Trust</h3><p>Whether models treat you as safe to repeat — built on third-party reviews, recognizable citations, and confirmed authorship.</p></div>
-      <div class="pillar"><h3>Citations Consistency</h3><p>Whether a model can resolve your identity and attribute content to you. Mismatched names, bios, and profiles cause hallucination, misattribution, or silence.</p></div>
+    <div class="status" id="audit-status" role="status" aria-live="polite"></div>
+    <section id="results" aria-live="polite"></section>
+
+    <h2>What is LLM Visibility?</h2>
+    <p>LLM visibility is how reliably AI answer engines find your brand, understand who you are, and cite you in their answers. It is the AI-era replacement for "do we rank?" — the new question is "do we get recalled and credited when a model answers?" The score above measures the <em>on-page foundations</em> of that; the biggest levers are off-domain (your third-party mention footprint) and are shown as a roadmap in every report.</p>
+
+    <h3>The four pillars</h3>
+    <div class="pillars-grid">
+      <div class="pcard"><h3>Search Mentions</h3><p>How broadly you're referenced across third-party sources, not just your own site. If no one beyond your domain talks about you, a model has little to work with.</p></div>
+      <div class="pcard"><h3>LLM Surfacing</h3><p>How often and how early you appear in AI answers to category questions, not just when prompted by name.</p></div>
+      <div class="pcard"><h3>Authority Trust</h3><p>Whether models treat you as safe to repeat — built on third-party reviews, recognizable citations, and confirmed authorship.</p></div>
+      <div class="pcard"><h3>Citations Consistency</h3><p>Whether a model can resolve your identity and attribute content to you. Mismatched names, bios, and profiles cause hallucination or silence.</p></div>
     </div>
 
-    <h2>The maturity ladder</h2>
-    <p>Brands climb five rungs. The goal is not to fix everything at once — it is to find the weakest pillar holding you at your current rung and unlock the next one.</p>
+    <h3>The maturity ladder</h3>
+    <p>Brands climb five rungs. The goal isn't to fix everything at once — it's to find the weakest pillar holding you at your current rung and unlock the next. On-page audits ceiling at <strong>Recognized</strong>; the top three rungs are earned off-domain.</p>
     <ol class="ladder">
-      <li><strong>Invisible</strong> — models do not surface you at all.</li>
-      <li><strong>Recognized</strong> — your entity is known, but you are rarely cited.</li>
+      <li><strong>Invisible</strong> — models don't surface you at all.</li>
+      <li><strong>Recognized</strong> — your entity is known, but you're rarely cited.</li>
       <li><strong>Referenced</strong> — you appear in answers without being named explicitly. The first real breakthrough.</li>
       <li><strong>Authoritative</strong> — the shift from "mentioned" to "safe to recommend."</li>
-      <li><strong>Default Source</strong> — category ownership; you are reached for first.</li>
+      <li><strong>Default Source</strong> — category ownership; you're reached for first.</li>
     </ol>
 
-    <h2>How the LLM Visibility Score measures it</h2>
-    <p>The LLM Visibility Score<sup>&trade;</sup> is a deterministic audit. It reads a page and scores the on-page foundations of AI citation: structured data and entity identity, on-page citations and statistics, answer-formatted content, freshness, and crawler access for AI answer engines. It surfaces your weakest pillar (the bottleneck) and places you on the maturity ladder. The off-domain pillars — your third-party mention footprint and live answer presence — are the bigger levers, and they are shown as a roadmap rather than scored from a single page, because they cannot be honestly measured from one URL. The free public certification is launching soon.</p>
+    <h3>How the score works</h3>
+    <p>The LLM Visibility Score<sup>&trade;</sup> is a deterministic audit — same page in, same score out. It reads one URL and scores the on-page foundations of AI citation across three pillars (Foundation, Validation, Ingestion), checks whether AI crawlers can retrieve the page at all, and surfaces your weakest pillar as the bottleneck to fix first. The off-domain pillars — your third-party mention footprint and live answer presence — are the bigger levers, shown as a roadmap rather than scored from a single page, because they can't be honestly measured from one URL.</p>
 
     <div class="author">
-      <p><strong>Reviewed by Matt Bertram</strong> — CEO of <a href="https://ewrdigital.com/" rel="author">EWR Digital</a>, host of <a href="https://bestseopodcast.com/">The Best SEO Podcast</a>, and author of <em>LLM Visibility</em>. Matt has spent 20+ years in search and AI-era discovery. More at <a href="https://matthewbertram.com/" rel="author">matthewbertram.com</a>.</p>
-      <p class="reviewed">Last reviewed: June 2026.</p>
+      <p><strong>Built by Matt Bertram</strong> — CEO of <a href="https://ewrdigital.com/" rel="author">EWR Digital</a>, host of <a href="https://bestseopodcast.com/">The Best SEO Podcast</a>, and author of <em>LLM Visibility</em>. 20+ years in search and AI-era discovery. More at <a href="https://matthewbertram.com/" rel="author">matthewbertram.com</a>.</p>
+      <p class="caveat">Last reviewed: June 2026.</p>
     </div>
 
     <footer>
       <p>LLM Visibility<sup>&trade;</sup> is a trademark of Matt Bertram, filed with the USPTO (filed, not yet registered). <!-- TODO(Matt): replace with the exact trademark legal line + issuing entity. --></p>
     </footer>
   </main>
+
+  <script>
+    const TIER = { none:["Not yet certified","none"], certified:["LLM Visibility™ Certified","certified"], gold:["LLM Visibility™ Gold","gold"] };
+    const form = document.getElementById('audit-form');
+    const input = document.getElementById('audit-url');
+    const btn = document.getElementById('audit-btn');
+    const statusEl = document.getElementById('audit-status');
+    const results = document.getElementById('results');
+
+    function setStatus(kind, html) { statusEl.className = 'status show ' + kind; statusEl.innerHTML = html; }
+    function clearStatus() { statusEl.className = 'status'; statusEl.innerHTML = ''; }
+    // Build elements safely — audited-page text is untrusted, so use textContent.
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+    function render(d) {
+      results.innerHTML = '';
+      const [tierLabel, tierCls] = TIER[d.tier] || TIER.none;
+      const ringColor = d.composite >= 80 ? 'var(--green)' : d.composite >= 60 ? 'var(--amber)' : 'var(--red)';
+
+      // scorecard
+      const card = el('div','scorecard');
+      const ring = el('div','ring'); ring.style.setProperty('--p', d.composite); ring.style.setProperty('--ring', ringColor);
+      const inner = el('div'); inner.appendChild(el('b', null, d.composite)); inner.appendChild(el('small', null, '/ 100'));
+      ring.appendChild(inner); card.appendChild(ring);
+      const meta = el('div','sc-meta');
+      meta.appendChild(el('span','badge ' + tierCls, tierLabel));
+      const elig = d.eligibility || {};
+      const eligCls = !elig.eligible ? 'bad' : /restricted/i.test(elig.reason||'') ? 'warn' : 'ok';
+      const eligPill = el('div','pill ' + eligCls, (elig.eligible ? '✓ ' : '✗ ') + (elig.reason || ''));
+      meta.appendChild(eligPill);
+      meta.appendChild(el('p','sc-url','Audited: ' + d.url));
+      card.appendChild(meta);
+      results.appendChild(card);
+
+      // maturity
+      const mat = d.maturity || {};
+      const matLine = el('p'); matLine.style.marginTop = '1rem';
+      matLine.appendChild(el('strong', null, 'Maturity: '));
+      matLine.appendChild(document.createTextNode(mat.label + (mat.ceilingReached ? ' (on-page ceiling)' : '')));
+      results.appendChild(matLine);
+      if (mat.caveat) results.appendChild(el('p','caveat', mat.caveat));
+
+      // pillars
+      results.appendChild(el('h3', null, 'Pillars'));
+      (d.pillars||[]).forEach(p => {
+        const row = el('div','pillar');
+        const top = el('div','top');
+        const nm = el('span','nm'); nm.appendChild(document.createTextNode(p.label + ' '));
+        nm.appendChild(el('span','ai','· ' + p.aiPillar));
+        if (p.isBottleneck) nm.appendChild(el('span','tag','FIX FIRST'));
+        top.appendChild(nm);
+        top.appendChild(el('span','rd', p.readiness + '/100'));
+        row.appendChild(top);
+        const bar = el('div','bar'); const fill = el('span'); fill.style.width = p.readiness + '%';
+        if (p.isBottleneck) fill.style.background = 'var(--red)';
+        bar.appendChild(fill); row.appendChild(bar);
+        results.appendChild(row);
+      });
+
+      // punch list
+      results.appendChild(el('h3', null, 'Punch list'));
+      (d.pillars||[]).forEach(p => {
+        const det = el('details','punch'); const sum = el('summary', null, p.label + ' — ' + p.readiness + '/100'); det.appendChild(sum);
+        (p.categories||[]).forEach(c => {
+          det.appendChild(el('div','cat', c.label + ' — ' + c.points + '/' + c.maxPoints));
+          if (c.evidence && c.evidence.length) { const ul = el('ul'); c.evidence.forEach(ev => ul.appendChild(el('li', null, ev))); det.appendChild(ul); }
+        });
+        results.appendChild(det);
+      });
+      // eligibility detail
+      if (elig.detail) {
+        const det = el('details','punch'); det.appendChild(el('summary', null, 'Crawler access (eligibility) — ' + elig.detail.points + '/' + elig.detail.maxPoints));
+        if (elig.detail.evidence) { const ul = el('ul'); elig.detail.evidence.forEach(ev => ul.appendChild(el('li', null, ev))); det.appendChild(ul); }
+        results.appendChild(det);
+      }
+
+      // roadmap
+      results.appendChild(el('h3', null, 'Off-domain roadmap (not scored from one URL)'));
+      const ul = el('ul','roadmap');
+      (d.roadmap||[]).forEach(r => ul.appendChild(el('li', null, r.name + ' (' + r.stackLayer + ', ' + r.plannedVersion + ') — ' + r.why)));
+      results.appendChild(ul);
+
+      results.className = 'show';
+      results.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = input.value.trim();
+      if (!url) return;
+      results.className = ''; results.innerHTML = '';
+      setStatus('loading', '<span class="spin"></span>Auditing ' + url + ' — this takes ~10–20 seconds…');
+      btn.disabled = true;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 65000);
+      try {
+        const resp = await fetch('/api/score?url=' + encodeURIComponent(url), { signal: ctrl.signal, headers: { 'Accept':'application/json' } });
+        const data = await resp.json().catch(() => ({ error:'The audit returned an unexpected response.' }));
+        if (!resp.ok) { setStatus('error', data.error || ('Audit failed (HTTP ' + resp.status + ').')); return; }
+        clearStatus(); render(data);
+      } catch (err) {
+        setStatus('error', err.name === 'AbortError' ? 'The audit timed out after 65s. Try a different page or retry.' : 'Network error — please try again.');
+      } finally {
+        clearTimeout(timer); btn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>

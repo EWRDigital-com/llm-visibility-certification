@@ -142,17 +142,21 @@ export async function scrapeUrl(url: string, opts: ScrapeOptions): Promise<PageS
   }
   const { rawHtml, statusCode, finalUrl } = parseFirecrawlScrape(json, url);
 
-  // 2. robots.txt + 3. per-bot live probes (sequential — be a polite single-origin visitor).
+  // 2. robots.txt, then 3. per-bot live probes. Probes run CONCURRENTLY: this is a
+  // single user-initiated audit (3 requests to one target, not a crawl), and the
+  // bounded latency keeps the serverless audit well under its time limit. Promise.all
+  // preserves AI_BOTS order, so botAccess order is stable.
   const robots = await fetchRobots(finalUrl, fetchImpl, timeoutMs);
   // robots rules can target query strings (Disallow: /*?*), so test path + search.
   const parsedFinal = new URL(finalUrl);
   const path = (parsedFinal.pathname || "/") + parsedFinal.search;
-  const botAccess: BotAccess[] = [];
-  for (const bot of AI_BOTS) {
-    const allowedByRobots = robots.raw ? isPathAllowed(robots.raw, bot.token, path) : true;
-    const fetchStatus = await probeBot(finalUrl, bot.ua, fetchImpl, timeoutMs);
-    botAccess.push({ bot: bot.token, allowedByRobots, fetchStatus });
-  }
+  const botAccess: BotAccess[] = await Promise.all(
+    AI_BOTS.map(async (bot) => {
+      const allowedByRobots = robots.raw ? isPathAllowed(robots.raw, bot.token, path) : true;
+      const fetchStatus = await probeBot(finalUrl, bot.ua, fetchImpl, timeoutMs);
+      return { bot: bot.token, allowedByRobots, fetchStatus };
+    }),
+  );
 
   // 4. Pure transform into the scorer's input contract.
   return htmlToScrape(rawHtml, { url, finalUrl, statusCode, robots, botAccess });
