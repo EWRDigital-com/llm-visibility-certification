@@ -38,11 +38,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(200).json({ url: target.toString(), ...result });
   } catch (e) {
     if (e instanceof ScrapeError) {
-      res.status(502).json({
-        error: `Couldn't reach that page — ${e.message}. That's a fetch problem, not a 0 score; check the URL or try again.`,
-      });
+      // Log the real cause server-side (Vercel logs); show the user a clean message.
+      console.error(`[score] scrape failed for ${target.toString()}: ${e.message}`);
+      // Distinguish a problem with the user's target page from a problem on our
+      // side (out of credits / rate-limited / scraper down). Only the specific
+      // "couldn't get the page" messages are the user's URL; everything else
+      // (Firecrawl HTTP 402/429/5xx, network, malformed) is our capacity issue.
+      const targetIssue = /no HTML|unreachable or empty|could not scrape/i.test(e.message);
+      if (targetIssue) {
+        res.status(502).json({
+          error: "We couldn't fetch that page. It may be offline, blocking automated visitors, or not returning HTML — check the URL and try again.",
+        });
+      } else {
+        res.status(503).json({
+          error: "The audit is temporarily at capacity. Please try again in a few minutes.",
+        });
+      }
       return;
     }
+    console.error(`[score] unexpected error for ${target.toString()}:`, e);
     res.status(500).json({ error: "Something went wrong running the audit. Please try again." });
   }
 }
