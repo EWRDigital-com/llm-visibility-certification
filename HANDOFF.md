@@ -23,7 +23,13 @@ Pro credential) is a hard Phase-2 gate, deferred.
 - `124ec84` **Phase 0 scrape adapter + CLIs**: `lib/scrape/{robots,parse,firecrawl}.ts`, `lib/report/format.ts`, `scripts/score-url.ts` + `scripts/score-batch.ts`. Scorer now runs on real URLs.
 - DONE and green (`npm test` → **77/77**, `npx tsc --noEmit` clean). Node v24, npm 11. Deps added: `cheerio` (runtime), `tsx` (dev).
 - Verified end-to-end on real HTML (matthewbertram.com) — pipeline produces a coherent report, bottleneck = Ingestion.
-- Repo is local only — NOT yet pushed to GitHub, NOT yet linked to Vercel.
+- **SHIPPED 2026-06-27 — GitHub + Vercel live.** Repo pushed **PUBLIC** to `EWRDigital-com/llm-visibility-certification`
+  (https://github.com/EWRDigital-com/llm-visibility-certification). Vercel project
+  `mattbertramlives-projects/llmvisibilitycertification.com` is live at https://llmvisibilitycertificationcom.vercel.app
+  (a `noindex` coming-soon placeholder = `public/index.html`; **GitHub→Vercel auto-deploy connected**, so push-to-main redeploys).
+  `.private/` + `scripts/calibration/` are gitignored AND vercelignored — book, answer key, and creds are NOT published.
+  ⚠️ **At Phase 1a: delete the `vercel.json` `outputDirectory: public` override** (and the placeholder) so Next.js builds normally.
+  ⚠️ **Scorer source (incl. provisional pre-calibration weights) is now PUBLIC** — flip repo private if the weight-exposure (plan decision #7, "answer key") matters more than the public-repo Vercel-Hobby benefit.
 
 ### Phase 0 architecture (pure logic / thin I/O split — mirrors the scorer)
 - `lib/scrape/robots.ts` — PURE robots.txt evaluator: `isPathAllowed(txt, botToken, path)`, longest-match (counts `*`/`$`), specific-bot beats `*`.
@@ -69,7 +75,7 @@ The scorer built this session is the on-page component — reused, re-labelled, 
 2. **Phase 1a (lead magnet)** — Next.js (App Router + Tailwind) skeleton + Supabase schema + submit form + `/api/audit` + worker + magic-link confirm + `/report/[id]`.
 3. **Phase 1b (public credential)** — ownership verify (DNS TXT / .well-known) → `/verify/[slug]` (noindex until trusted) + static badge SVG + brand JSON-LD.
 4. **Phase 1c (hardening)** — `/methodology` (categories, NOT weights), `/privacy` + `/api/me` deletion, rate-limit + daily cap + queue, email SPF/DKIM/DMARC.
-5. **Plumbing** — create GitHub repo under EWR Digital org, push, link Vercel, point DNS.
+5. **Plumbing** — ✅ GitHub repo under EWR Digital org (`EWRDigital-com`) created + pushed (public); ✅ Vercel linked + auto-deploy connected. **Remaining: point DNS** (`llmvisibilitycertification.com` → Vercel) when ready to go past the placeholder.
 
 ## Inputs needed for the next heavy session
 
