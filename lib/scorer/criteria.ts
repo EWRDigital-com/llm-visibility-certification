@@ -1,7 +1,8 @@
 // Deterministic category scorers for the LLM Visibility Score™.
 //
-// Each scorer is a pure function PageScrape -> CategoryResult. Weights (maxPoints)
-// sum to 100 across the seven categories, so the composite is already a 0-100 score.
+// Each scorer is a pure function PageScrape -> CategoryResult. These atomic
+// measurements roll up into pillars in index.ts (Foundation / Validation /
+// Ingestion); crawler_access feeds the eligibility gate, not the composite.
 // NOTE: these point weights are provisional and will be tuned during calibration
 // (rank-ordering against ~30-50 sites with known real LLM-citation status). The
 // methodology PAGE publishes the categories and principles, NOT these exact weights.
@@ -111,9 +112,13 @@ export function scoreCitations(s: PageScrape): CategoryResult {
   return { key: "citations", label: "Citations, statistics & quotes", points: clamp(pts, 15), maxPoints: 15, evidence };
 }
 
-// ---------- 3. Entity & E-E-A-T (max 15) ----------
+// ---------- 3a. Author trust (max 5) → VALIDATION pillar ----------
+// Book: "Confirmed authorship (bios with credentials that match public records)"
+// is part of Authority Trust. On-page we can only confirm authorship is asserted;
+// the heavier Authority-Trust signals (third-party citations, reviews) are
+// off-domain and live in the roadmap, not here.
 
-export function scoreEeat(s: PageScrape): CategoryResult {
+export function scoreAuthorTrust(s: PageScrape): CategoryResult {
   const evidence: string[] = [];
   let pts = 0;
   const person = findNode(s.jsonLd, ["Person"]);
@@ -122,18 +127,31 @@ export function scoreEeat(s: PageScrape): CategoryResult {
   const hasAuthor = !!s.author || !!person || !!(org && org["author"]);
   if (hasAuthor) {
     pts += 5;
-    evidence.push(`Author identified${s.author ? `: ${s.author}` : ""}`);
+    evidence.push(`Author/authorship identified${s.author ? `: ${s.author}` : ""}`);
   } else {
-    evidence.push("No author attribution (E-E-A-T signal)");
+    evidence.push("No author attribution — models favor content with confirmed authorship");
   }
+  return { key: "author_trust", label: "Author trust", points: clamp(pts, 5), maxPoints: 5, evidence };
+}
 
+// ---------- 3b. Entity identity (max 10) → FOUNDATION pillar ----------
+// Book: entity resolution is the heaviest theme (68 "entity" mentions). sameAs
+// to Wikidata/Crunchbase/LinkedIn turns "maybe it's them" into "it's definitely
+// them"; About/Contact + a declared Organization name anchor canonical truth.
+
+export function scoreEntity(s: PageScrape): CategoryResult {
+  const evidence: string[] = [];
+  let pts = 0;
+  const person = findNode(s.jsonLd, ["Person"]);
+  const org = findNode(s.jsonLd, ["Organization", "LocalBusiness"]);
   const entity = person ?? org;
+
   const sameAs = entity && Array.isArray(entity["sameAs"]) ? entity["sameAs"] : [];
   if (sameAs.length >= 1) {
     pts += 4;
-    evidence.push(`${sameAs.length} sameAs entity link(s)`);
+    evidence.push(`${sameAs.length} sameAs entity link(s) (knowledge-graph resolution)`);
   } else {
-    evidence.push("No sameAs entity links (knowledge-graph signal)");
+    evidence.push("No sameAs entity links — add LinkedIn/Crunchbase/Wikidata to resolve identity");
   }
 
   if (s.links.some((l) => /\/(about|contact|team)\b/i.test(l.href))) {
@@ -145,11 +163,11 @@ export function scoreEeat(s: PageScrape): CategoryResult {
 
   if (org && typeof org["name"] === "string") {
     pts += 3;
-    evidence.push(`Organization: ${org["name"]}`);
+    evidence.push(`Organization declared: ${org["name"]}`);
   } else {
     evidence.push("No Organization name in schema");
   }
-  return { key: "eeat", label: "Entity & E-E-A-T", points: clamp(pts, 15), maxPoints: 15, evidence };
+  return { key: "entity", label: "Entity identity", points: clamp(pts, 10), maxPoints: 10, evidence };
 }
 
 // ---------- 4. LLM crawler access (max 20) ----------
