@@ -1,6 +1,6 @@
 # HANDOFF — LLM Visibility Certification™
 
-Last updated: 2026-06-26. Read this first when resuming. Built with **gstack** — keep using it.
+Last updated: 2026-06-27. Read this first when resuming. Built with **gstack** — keep using it.
 
 ## What this is
 Free, public certification platform for the standalone **LLM Visibility™** brand
@@ -20,8 +20,19 @@ Pro credential) is a hard Phase-2 gate, deferred.
 - `f76e081` locked implementation plan
 - `90cd2ce` Phase 0 / T1 core: deterministic scorer `lib/scorer` (original 7 flat categories)
 - `02c0071` **Pillar reframe: 3 scored pillars + eligibility gate + bottleneck + capped maturity rung**
-- Scorer is DONE and green (`npm test` → 34/34, `npx tsc --noEmit` clean). Node v24, npm 11.
+- `124ec84` **Phase 0 scrape adapter + CLIs**: `lib/scrape/{robots,parse,firecrawl}.ts`, `lib/report/format.ts`, `scripts/score-url.ts` + `scripts/score-batch.ts`. Scorer now runs on real URLs.
+- DONE and green (`npm test` → **77/77**, `npx tsc --noEmit` clean). Node v24, npm 11. Deps added: `cheerio` (runtime), `tsx` (dev).
+- Verified end-to-end on real HTML (matthewbertram.com) — pipeline produces a coherent report, bottleneck = Ingestion.
 - Repo is local only — NOT yet pushed to GitHub, NOT yet linked to Vercel.
+
+### Phase 0 architecture (pure logic / thin I/O split — mirrors the scorer)
+- `lib/scrape/robots.ts` — PURE robots.txt evaluator: `isPathAllowed(txt, botToken, path)`, longest-match (counts `*`/`$`), specific-bot beats `*`.
+- `lib/scrape/parse.ts` — PURE `htmlToScrape(rawHtml, ctx) → PageScrape` via cheerio (JSON-LD incl. @graph + invalid-block skip, headings, links+rel+external, blockquotes, meta/JSON-LD dates+author).
+- `lib/scrape/firecrawl.ts` — THIN I/O: `scrapeUrl(url, {apiKey})` = Firecrawl `/v2/scrape` (rawHtml) + robots fetch + per-bot UA probe → `htmlToScrape`. `parseFirecrawlScrape` is pure + tested. **Scrape failure throws `ScrapeError` (never a 0-score).**
+- `lib/report/format.ts` — PURE: `formatReport(result, url)` (CLI report) + `batchToCsv(rows)` (rank-ordered calibration CSV, formula-injection-safe).
+- `scripts/score-url.ts` — `npm run score -- <url> [--json]`. `scripts/score-batch.ts` — `npm run score:batch -- (--in urls.txt | <url>...) [--out cal.csv]` (sequential = polite + within rate limits).
+- **To run live:** put `FIRECRAWL_API_KEY` in `.env` (see `.env.example`; key also in `seo-intel/.env`). Loaded via Node 22 `process.loadEnvFile`.
+- **Known follow-up:** cheerio `.text()` concatenates across `<br>` in headings ("Gas"+"AI") — cosmetic, doesn't affect scoring.
 
 ## Resume protocol (gstack-native)
 1. Open the project; gstack auto-routes via `CLAUDE.md` → `## Skill routing`.
@@ -54,7 +65,7 @@ The book defines a richer model than the v1 on-page scorer. Reconcile before tun
 The scorer built this session is the on-page component — reused, re-labelled, not rebuilt.
 
 ## Next pieces (build in order; pick one per session)
-1. **Finish Phase 0** — `scripts/score-url.ts` CLI + Firecrawl→`PageScrape` adapter + calibration harness. Then run it on the calibration set and tune weights in `lib/scorer/criteria.ts` (category maxes) + `lib/scorer/index.ts` (`PILLAR_SPECS` pillar weights + tier/rung thresholds). *(Scorer logic already done.)*
+1. **Finish Phase 0 calibration** — CLI + adapter + harness are DONE (`124ec84`). Remaining: (a) bootstrap the ~30–50-site calibration set with real AI-citation status, (b) run `npm run score:batch` over it, (c) reweight `lib/scorer/criteria.ts` (category maxes) + `lib/scorer/index.ts` (`PILLAR_SPECS` weights + tier/rung thresholds) to rank-order correctly. This is methodology-reconciliation **step 4**, and the launch gate. Needs the calibration list (or approve a bootstrap) + a live `FIRECRAWL_API_KEY` in `.env`.
 2. **Phase 1a (lead magnet)** — Next.js (App Router + Tailwind) skeleton + Supabase schema + submit form + `/api/audit` + worker + magic-link confirm + `/report/[id]`.
 3. **Phase 1b (public credential)** — ownership verify (DNS TXT / .well-known) → `/verify/[slug]` (noindex until trusted) + static badge SVG + brand JSON-LD.
 4. **Phase 1c (hardening)** — `/methodology` (categories, NOT weights), `/privacy` + `/api/me` deletion, rate-limit + daily cap + queue, email SPF/DKIM/DMARC.
@@ -77,8 +88,9 @@ The scorer built this session is the on-page component — reused, re-labelled, 
 - **Calibration set bootstrap** — I can assemble a candidate list and check citations (Firecrawl + DataForSEO), for your approval.
 
 ## Toolchain / commands
-- `npm test` (vitest run) · `npm run test:watch` · `npx tsc --noEmit`
-- Node v24, npm 11. `type: module`, TS `moduleResolution: Bundler`.
+- `npm test` (vitest run, 77 tests) · `npm run test:watch` · `npm run typecheck` (`tsc --noEmit`)
+- `npm run score -- <url> [--json]` · `npm run score:batch -- (--in urls.txt | <url>...) [--out cal.csv]` (need `FIRECRAWL_API_KEY` in `.env`)
+- Node v24, npm 11. `type: module`, TS `moduleResolution: Bundler`. Deps: `cheerio` (runtime), `tsx` + `vitest` + `typescript` (dev).
 - `node_modules/`, `.env*`, `.private/` are gitignored.
 
 ## Locked decisions (do not re-litigate without flagging)
