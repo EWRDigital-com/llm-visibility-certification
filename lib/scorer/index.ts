@@ -24,7 +24,7 @@ import type {
   MaturityResult,
   EligibilityResult,
   RoadmapPillar,
-} from "./types";
+} from "./types.js";
 import {
   scoreSchema,
   scoreEntity,
@@ -34,7 +34,7 @@ import {
   scoreFreshness,
   scoreBrand,
   scoreCrawlerAccess,
-} from "./criteria";
+} from "./criteria.js";
 
 // ---------- Pillar definitions ----------
 // Which atomic measurements feed each pillar, plus its composite weight. Book
@@ -197,5 +197,5 @@ export function scoreSite(scrape: PageScrape, opts: ScoreOptions = {}): ScoreRes
   };
 }
 
-export * from "./types";
-export * from "./criteria";
+export * from "./types.js";
+export * from "./criteria.js";

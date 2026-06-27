@@ -53,8 +53,7 @@ if (urls.length === 0) {
 const apiKey = process.env.FIRECRAWL_API_KEY ?? "";
 const rows: BatchRow[] = [];
 
-// Async IIFE (not top-level await) so the project can stay CommonJS — required
-// for the Vercel function to bundle cheerio's CJS deps without crashing.
+// Executable body in an async IIFE so it needs no top-level await.
 void (async () => {
   for (let i = 0; i < urls.length; i++) {
     const url = urls[i]!;

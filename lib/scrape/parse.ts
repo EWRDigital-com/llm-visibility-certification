@@ -3,7 +3,7 @@
 // produce the normalized scrape the scorer consumes. Fully offline-testable.
 
 import * as cheerio from "cheerio";
-import type { PageScrape, Heading, PageLink, JsonLdBlock, RobotsInfo, BotAccess } from "../scorer/types";
+import type { PageScrape, Heading, PageLink, JsonLdBlock, RobotsInfo, BotAccess } from "../scorer/types.js";
 
 /** Network-derived fields the parser can't get from HTML alone. */
 export interface ScrapeContext {

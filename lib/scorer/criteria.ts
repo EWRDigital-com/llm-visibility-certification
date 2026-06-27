@@ -7,7 +7,7 @@
 // (rank-ordering against ~30-50 sites with known real LLM-citation status). The
 // methodology PAGE publishes the categories and principles, NOT these exact weights.
 
-import type { PageScrape, CategoryResult, JsonLdBlock } from "./types";
+import type { PageScrape, CategoryResult, JsonLdBlock } from "./types.js";
 
 // ---------- JSON-LD helpers (handle @graph + @type string|array) ----------
 

@@ -6,8 +6,8 @@
 // Node.js runtime (cheerio + node fetch are not edge-safe).
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { scrapeUrl, ScrapeError } from "../lib/scrape/firecrawl";
-import { scoreSite } from "../lib/scorer";
+import { scrapeUrl, ScrapeError } from "../lib/scrape/firecrawl.js";
+import { scoreSite } from "../lib/scorer/index.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const raw = req.query.url;

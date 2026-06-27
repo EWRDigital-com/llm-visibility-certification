@@ -7,9 +7,9 @@
 // retrieved throws ScrapeError. The caller surfaces "couldn't reach your site,
 // retry" — it must NEVER become a 0-score masquerading as a real result.
 
-import { htmlToScrape } from "./parse";
-import { isPathAllowed } from "./robots";
-import type { PageScrape, BotAccess } from "../scorer/types";
+import { htmlToScrape } from "./parse.js";
+import { isPathAllowed } from "./robots.js";
+import type { PageScrape, BotAccess } from "../scorer/types.js";
 
 export class ScrapeError extends Error {
   override name = "ScrapeError";

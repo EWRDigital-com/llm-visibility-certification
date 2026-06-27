@@ -1,7 +1,7 @@
 // Pure presentation: turn a ScoreResult into a human-readable CLI report, and a
 // set of batch rows into a rank-ordered CSV for calibration. No I/O here.
 
-import type { ScoreResult, PillarKey, Tier, MaturityRung } from "../scorer/types";
+import type { ScoreResult, PillarKey, Tier, MaturityRung } from "../scorer/types.js";
 
 const TIER_LABEL: Record<Tier, string> = {
   none: "Not yet certified",

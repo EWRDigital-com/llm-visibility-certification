@@ -35,8 +35,7 @@ try {
 
 const apiKey = process.env.FIRECRAWL_API_KEY ?? "";
 
-// Wrapped in an async IIFE (not top-level await) so the project can stay
-// CommonJS — which is what lets the Vercel function bundle cheerio's CJS deps.
+// Executable body in an async IIFE so it needs no top-level await.
 void (async () => {
   try {
     const scrape = await scrapeUrl(url, { apiKey });
