@@ -1,7 +1,9 @@
-// Thin I/O shell: turn a URL into a PageScrape using Firecrawl for the page
-// fetch, a direct robots.txt fetch, and per-bot UA probes to catch WAF/CDN
-// blocks. All parsing/scoring logic lives in the pure modules (parse.ts,
-// robots.ts) — this file only does network + wiring.
+// Thin I/O shell: turn a URL into a PageScrape. The page fetch is FREE by default
+// (a direct GET — enough for the on-page signals the scorer reads on server-
+// rendered HTML); a Firecrawl key is OPTIONAL and only used for JS-rendered pages,
+// with automatic fallback to the free fetch if Firecrawl fails (e.g. out of credits).
+// robots.txt + per-bot UA probes are direct fetches. Parsing/scoring lives in the
+// pure modules (parse.ts, robots.ts) — this file only does network + wiring.
 //
 // Failure contract (IMPLEMENTATION-PLAN failure modes): a scrape that can't be
 // retrieved throws ScrapeError. The caller surfaces "couldn't reach your site,
@@ -63,10 +65,14 @@ export function parseFirecrawlScrape(json: unknown, requestedUrl: string): Firec
 type FetchImpl = typeof fetch;
 
 export interface ScrapeOptions {
-  apiKey: string;
+  apiKey?: string; // optional: if set, try Firecrawl (JS rendering); else free direct fetch
   fetchImpl?: FetchImpl; // injectable for testing
-  timeoutMs?: number; // per-request timeout (Firecrawl + each probe)
+  timeoutMs?: number; // per-request timeout (page fetch + each probe)
 }
+
+/** A current desktop-Chrome UA — some sites refuse non-browser agents. */
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 async function withTimeout<T>(ms: number, run: (signal: AbortSignal) => Promise<T>): Promise<T> {
   const controller = new AbortController();
@@ -113,20 +119,42 @@ async function fetchRobots(finalUrl: string, fetchImpl: FetchImpl, timeoutMs: nu
   }
 }
 
-/** Full pipeline: URL -> PageScrape. Throws ScrapeError if the page can't be retrieved. */
-export async function scrapeUrl(url: string, opts: ScrapeOptions): Promise<PageScrape> {
-  const fetchImpl = opts.fetchImpl ?? fetch;
-  const timeoutMs = opts.timeoutMs ?? 30_000;
+/** FREE page fetch: a direct GET of the URL. No API key, no JS rendering — enough
+ *  for the on-page signals the scorer reads (schema, meta, headings, links) on
+ *  server-rendered HTML. Non-2xx flows through (the eligibility gate handles it);
+ *  only a network failure or an empty 2xx body is a hard ScrapeError. */
+export async function fetchPageDirect(url: string, fetchImpl: FetchImpl, timeoutMs: number): Promise<FirecrawlScrape> {
+  let res: Response;
+  try {
+    res = await withTimeout(timeoutMs, (signal) =>
+      fetchImpl(url, {
+        method: "GET",
+        headers: { "User-Agent": BROWSER_UA, Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+        redirect: "follow",
+        signal,
+      }),
+    );
+  } catch (e) {
+    throw new ScrapeError(`${url} is unreachable — it may be offline or blocking automated visitors (${(e as Error).message})`);
+  }
+  const statusCode = res.status;
+  const finalUrl = res.url || url;
+  const rawHtml = await res.text().catch(() => "");
+  if (statusCode >= 200 && statusCode < 300 && rawHtml.trim().length === 0) {
+    throw new ScrapeError(`No HTML returned for ${url} — site unreachable or empty`);
+  }
+  return { rawHtml, statusCode, finalUrl };
+}
 
-  if (!opts.apiKey) throw new ScrapeError("FIRECRAWL_API_KEY is not set — cannot scrape");
-
-  // 1. Firecrawl page fetch (rawHtml + status + final URL after redirects).
+/** OPTIONAL Firecrawl fetch (JS rendering). Throws ScrapeError on any failure so
+ *  the caller can fall back to the free direct fetch. */
+async function fetchViaFirecrawl(url: string, apiKey: string, fetchImpl: FetchImpl, timeoutMs: number): Promise<FirecrawlScrape> {
   let json: unknown;
   try {
     json = await withTimeout(timeoutMs, async (signal) => {
       const res = await fetchImpl(FIRECRAWL_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${opts.apiKey}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({ url, formats: ["rawHtml"], onlyMainContent: false }),
         signal,
       });
@@ -140,7 +168,27 @@ export async function scrapeUrl(url: string, opts: ScrapeOptions): Promise<PageS
     if (e instanceof ScrapeError) throw e;
     throw new ScrapeError(`Firecrawl request failed for ${url}: ${(e as Error).message}`);
   }
-  const { rawHtml, statusCode, finalUrl } = parseFirecrawlScrape(json, url);
+  return parseFirecrawlScrape(json, url);
+}
+
+/** Full pipeline: URL -> PageScrape. Throws ScrapeError if the page can't be retrieved. */
+export async function scrapeUrl(url: string, opts: ScrapeOptions = {}): Promise<PageScrape> {
+  const fetchImpl = opts.fetchImpl ?? fetch;
+  const timeoutMs = opts.timeoutMs ?? 30_000;
+
+  // 1. Page fetch — free direct GET by default; Firecrawl only if a key is given
+  // (with fallback to the free fetch if Firecrawl fails, e.g. out of credits).
+  let page: FirecrawlScrape;
+  if (opts.apiKey) {
+    try {
+      page = await fetchViaFirecrawl(url, opts.apiKey, fetchImpl, timeoutMs);
+    } catch {
+      page = await fetchPageDirect(url, fetchImpl, timeoutMs);
+    }
+  } else {
+    page = await fetchPageDirect(url, fetchImpl, timeoutMs);
+  }
+  const { rawHtml, statusCode, finalUrl } = page;
 
   // 2. robots.txt, then 3. per-bot live probes. Probes run CONCURRENTLY: this is a
   // single user-initiated audit (3 requests to one target, not a crawl), and the

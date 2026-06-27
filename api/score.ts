@@ -22,16 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const apiKey = process.env.FIRECRAWL_API_KEY ?? "";
-  if (!apiKey) {
-    res.status(503).json({
-      error: "The audit engine isn't configured yet (the site owner needs to add the scrape key). Check back shortly.",
-    });
-    return;
-  }
-
   try {
-    const scrape = await scrapeUrl(target.toString(), { apiKey, timeoutMs: 15_000 });
+    // Free direct fetch (no API key) — enough for on-page signals on server-rendered HTML.
+    const scrape = await scrapeUrl(target.toString(), { timeoutMs: 15_000 });
     const result = scoreSite(scrape);
     // Cache identical audits briefly at the edge; scores are deterministic per page.
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
