@@ -27,6 +27,20 @@ Pro credential) is a hard Phase-2 gate, deferred.
 2. The newest checkpoint at `~/.gstack/projects/llmvisibilitycertification.com/checkpoints/` is read by gstack's context-recovery on the next skill run (or run `/gstack-context-restore`).
 3. The loop continues: build a piece → `/gstack-review` before committing → `/gstack-ship` when a phase is shippable. For new sub-features, `/gstack-plan-eng-review` against the plan first.
 
+## ⚠ Methodology reconciliation — do this FIRST next session
+The book defines a richer model than the v1 on-page scorer. Reconcile before tuning weights.
+- **The Stack (5 causal layers):** Foundation (trademark/entity anchors) · Engine (content & PR mentions) · Validation (analyst/academic citations) · Ingestion (LLM training inputs) · Impact (market adoption).
+- **The Four Pillars (the scoreboard):** Search Mentions · LLM Surfacing · Authority Trust · Citations Consistency.
+- **Scoring = maturity ladder + bottleneck** (Invisible → Recognized → Referenced → Authoritative → Default Source). Faithful scorer surfaces the WEAKEST pillar, not a flat sum.
+- **Biggest levers are OFF-DOMAIN** (third-party mention footprint, cross-web entity consistency, authority citations, LLM surfacing via prompt suites). The v1 scorer (`lib/scorer`) is **on-page-only** — it faithfully covers the Foundation/Ingestion on-page subset (schema, sameAs/entity, answer-formatting, freshness, on-page citations) but CANNOT see off-domain pillars from one URL.
+- Book **omits llms.txt and named bots** (GPTBot/ClaudeBot). Don't over-weight crawler mechanics; don't reward llms.txt as if the book backs it. (Crawler-access is still a real eligibility gate, just keep it light per the source.)
+
+**Decision for Matt (first thing next session):**
+- **(A, recommended for v1)** Score the on-page subset only — honest, deterministic, free, single-URL — but RE-FRAME it into the book's Stack/4-Pillar language + bottleneck output ("your weakest pillar is X"), and show the off-domain pillars as a roadmap/next-step.
+- **(B)** Expand v1 to include off-domain signals (web-wide mention scan + entity-consistency + live LLM prompt-suite surfacing). Much closer to the book, but heavier, costlier, and non-deterministic.
+
+The scorer built this session is NOT wasted — it's the on-page component. It needs: category re-labelling to pillar language, and a bottleneck/maturity-ladder output layer. Use `.private/rubric-source-digest.md` as the spec.
+
 ## Next pieces (build in order; pick one per session)
 1. **Finish Phase 0** — `scripts/score-url.ts` CLI + Firecrawl→`PageScrape` adapter + calibration harness. Then run it on the calibration set and tune weights in `lib/scorer/criteria.ts`. *(Scorer logic already done.)*
 2. **Phase 1a (lead magnet)** — Next.js (App Router + Tailwind) skeleton + Supabase schema + submit form + `/api/audit` + worker + magic-link confirm + `/report/[id]`.
@@ -37,7 +51,7 @@ Pro credential) is a hard Phase-2 gate, deferred.
 ## Inputs needed for the next heavy session
 
 ### Only Matt can provide
-- **The book** *LLM Visibility* → drop in `.private/` (gitignored). Grounds the rubric, the exam, the methodology page, and E-E-A-T. PDF/DOCX/EPUB/markdown all fine.
+- ✅ **The book — RECEIVED.** *LLM Visibility Stack V1* (by Matt) → `.private/llm-visibility-stack-v1.md` (raw) + `.private/rubric-source-digest.md` (methodology extract). **See "Methodology reconciliation" below — it changes the scorer scope.**
 - **Trademark legal line + issuing entity** — exact wording + which entity issues the cert ("LLM Visibility™ / Matt Bertram" personally, or another entity). Blocks first public route.
 - **Calibration ground truth** — ~30–50 sites with their real AI-citation status (or approve a list I bootstrap). Needed before any public trademarked score.
 - **Email provider choice** — Resend or Postmark (+ which domain sends).
