@@ -3,29 +3,146 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex" />
-  <title>LLM Visibility&trade; Certification — Coming Soon</title>
+  <title>What Is LLM Visibility? The 4 Pillars, the Maturity Ladder & How to Measure It</title>
+  <meta name="description" content="LLM Visibility is how reliably AI answer engines find, understand, and cite your brand. Here are the four pillars, the five-rung maturity ladder, and how the LLM Visibility Score measures it." />
+  <link rel="canonical" href="https://llmvisibilitycertification.com/" />
+  <meta property="og:title" content="What Is LLM Visibility?" />
+  <meta property="og:description" content="How reliably AI answer engines find, understand, and cite your brand — the four pillars, the maturity ladder, and how to measure it." />
+  <meta property="og:url" content="https://llmvisibilitycertification.com/" />
+  <meta property="og:type" content="article" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://llmvisibilitycertification.com/#organization",
+        "name": "LLM Visibility",
+        "alternateName": "LLM Visibility Certification",
+        "url": "https://llmvisibilitycertification.com/",
+        "description": "A free, public certification measuring how well a website is set up to be found, understood, and cited by AI answer engines.",
+        "founder": { "@id": "https://matthewbertram.com/#person" },
+        "knowsAbout": ["LLM visibility", "generative engine optimization", "answer engine optimization", "AI search", "entity SEO"]
+      },
+      {
+        "@type": "Person",
+        "@id": "https://matthewbertram.com/#person",
+        "name": "Matt Bertram",
+        "url": "https://matthewbertram.com/",
+        "jobTitle": "CEO, EWR Digital",
+        "worksFor": { "@id": "https://ewrdigital.com/#organization" },
+        "author": { "@id": "https://llmvisibilitycertification.com/#book" },
+        "sameAs": [
+          "https://matthewbertram.com/",
+          "https://ewrdigital.com/",
+          "https://bestseopodcast.com/"
+        ]
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://ewrdigital.com/#organization",
+        "name": "EWR Digital",
+        "url": "https://ewrdigital.com/"
+      },
+      {
+        "@type": "PodcastSeries",
+        "@id": "https://bestseopodcast.com/#podcast",
+        "name": "The Best SEO Podcast",
+        "url": "https://bestseopodcast.com/",
+        "author": { "@id": "https://matthewbertram.com/#person" }
+      },
+      {
+        "@type": "Book",
+        "@id": "https://llmvisibilitycertification.com/#book",
+        "name": "LLM Visibility",
+        "author": { "@id": "https://matthewbertram.com/#person" }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://llmvisibilitycertification.com/#website",
+        "url": "https://llmvisibilitycertification.com/",
+        "name": "LLM Visibility Certification",
+        "publisher": { "@id": "https://llmvisibilitycertification.com/#organization" }
+      },
+      {
+        "@type": "Article",
+        "@id": "https://llmvisibilitycertification.com/#article",
+        "headline": "What Is LLM Visibility?",
+        "author": { "@id": "https://matthewbertram.com/#person" },
+        "publisher": { "@id": "https://llmvisibilitycertification.com/#organization" },
+        "mainEntityOfPage": "https://llmvisibilitycertification.com/",
+        "about": ["LLM visibility", "answer engine optimization", "generative engine optimization"]
+      }
+    ]
+  }
+  </script>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
     body {
-      margin: 0; min-height: 100vh; display: grid; place-items: center;
-      background: #0a0a0a; color: #ededed;
-      font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      padding: 24px;
+      margin: 0; background: #0a0a0a; color: #ededed;
+      font: 17px/1.7 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    main { max-width: 38rem; text-align: center; }
-    h1 { font-size: clamp(1.8rem, 5vw, 2.75rem); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 1rem; }
-    p { color: #a1a1a1; margin: 0 auto 0.75rem; max-width: 32rem; }
-    .soon { margin-top: 1.75rem; font-weight: 600; color: #ededed; letter-spacing: 0.01em; }
-    sup { font-size: 0.55em; vertical-align: super; }
+    .wrap { max-width: 52rem; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
+    h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 1rem; }
+    h2 { font-size: clamp(1.4rem, 4vw, 1.9rem); letter-spacing: -0.01em; margin: 2.75rem 0 0.75rem; }
+    h3 { font-size: 1.15rem; margin: 1.5rem 0 0.35rem; }
+    p, li { color: #c9c9c9; }
+    .lead { font-size: 1.2rem; color: #ededed; }
+    sup { font-size: 0.5em; vertical-align: super; }
+    a { color: #f59e0b; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ol.ladder { counter-reset: rung; list-style: none; padding-left: 0; }
+    ol.ladder li { counter-increment: rung; padding: 0.5rem 0 0.5rem 2.5rem; position: relative; border-top: 1px solid #1f1f1f; }
+    ol.ladder li::before { content: counter(rung); position: absolute; left: 0; top: 0.55rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #1a1a1a; color: #f59e0b; display: grid; place-items: center; font-size: 0.85rem; font-weight: 700; }
+    .pillars { display: grid; gap: 1rem; grid-template-columns: 1fr; margin-top: 1rem; }
+    @media (min-width: 640px) { .pillars { grid-template-columns: 1fr 1fr; } }
+    .pillar { border: 1px solid #1f1f1f; border-radius: 12px; padding: 1rem 1.1rem; }
+    .pillar h3 { margin-top: 0; color: #ededed; }
+    .author { margin-top: 4rem; border-top: 1px solid #1f1f1f; padding-top: 1.5rem; color: #a1a1a1; font-size: 0.95rem; }
+    .author strong { color: #ededed; }
+    footer { margin-top: 2.5rem; border-top: 1px solid #1f1f1f; padding-top: 1.25rem; color: #8a8a8a; font-size: 0.82rem; }
+    .reviewed { color: #8a8a8a; font-size: 0.85rem; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
-  <main>
-    <h1>LLM Visibility<sup>&trade;</sup> Certification</h1>
-    <p>A free, public benchmark for how well a website is set up to be found, understood, and cited by AI answer engines.</p>
-    <p class="soon">Launching soon.</p>
+  <main class="wrap">
+    <h1>What Is LLM Visibility?</h1>
+    <p class="lead">LLM visibility is how reliably AI answer engines like ChatGPT, Google AI Overviews, Perplexity, Gemini, and Claude find your brand, understand who you are, and cite you in their answers. It is the AI-era replacement for the question "do we rank?" — the new question is "do we get recalled and credited when a model answers?"</p>
+
+    <h2>Why it is different from SEO</h2>
+    <p>Classic SEO is about <em>eligibility</em>: being crawlable, indexable, and ranked. LLM visibility is about <em>selection</em>: whether a model chooses to repeat you when it composes an answer. A page can rank on page one and still never be cited in the AI answer sitting above it. The two are related — most AI engines pull from the organic results — but they are scored differently, and the levers that win citation are not the same ones that win a blue link.</p>
+
+    <h2>The four pillars</h2>
+    <p>LLM visibility breaks into four measurable pillars. Together they answer whether you are present, understood, trusted, and credited.</p>
+    <div class="pillars">
+      <div class="pillar"><h3>Search Mentions</h3><p>How broadly you are referenced across third-party sources, not just your own site. If no one beyond your domain talks about you, a model has little to work with.</p></div>
+      <div class="pillar"><h3>LLM Surfacing</h3><p>How often and how early you appear in AI answers to category questions ("best CRM for small teams"), not just when prompted by name.</p></div>
+      <div class="pillar"><h3>Authority Trust</h3><p>Whether models treat you as safe to repeat — built on third-party reviews, recognizable citations, and confirmed authorship.</p></div>
+      <div class="pillar"><h3>Citations Consistency</h3><p>Whether a model can resolve your identity and attribute content to you. Mismatched names, bios, and profiles cause hallucination, misattribution, or silence.</p></div>
+    </div>
+
+    <h2>The maturity ladder</h2>
+    <p>Brands climb five rungs. The goal is not to fix everything at once — it is to find the weakest pillar holding you at your current rung and unlock the next one.</p>
+    <ol class="ladder">
+      <li><strong>Invisible</strong> — models do not surface you at all.</li>
+      <li><strong>Recognized</strong> — your entity is known, but you are rarely cited.</li>
+      <li><strong>Referenced</strong> — you appear in answers without being named explicitly. The first real breakthrough.</li>
+      <li><strong>Authoritative</strong> — the shift from "mentioned" to "safe to recommend."</li>
+      <li><strong>Default Source</strong> — category ownership; you are reached for first.</li>
+    </ol>
+
+    <h2>How the LLM Visibility Score measures it</h2>
+    <p>The LLM Visibility Score<sup>&trade;</sup> is a deterministic audit. It reads a page and scores the on-page foundations of AI citation: structured data and entity identity, on-page citations and statistics, answer-formatted content, freshness, and crawler access for AI answer engines. It surfaces your weakest pillar (the bottleneck) and places you on the maturity ladder. The off-domain pillars — your third-party mention footprint and live answer presence — are the bigger levers, and they are shown as a roadmap rather than scored from a single page, because they cannot be honestly measured from one URL. The free public certification is launching soon.</p>
+
+    <div class="author">
+      <p><strong>Reviewed by Matt Bertram</strong> — CEO of <a href="https://ewrdigital.com/" rel="author">EWR Digital</a>, host of <a href="https://bestseopodcast.com/">The Best SEO Podcast</a>, and author of <em>LLM Visibility</em>. Matt has spent 20+ years in search and AI-era discovery. More at <a href="https://matthewbertram.com/" rel="author">matthewbertram.com</a>.</p>
+      <p class="reviewed">Last reviewed: June 2026.</p>
+    </div>
+
+    <footer>
+      <p>LLM Visibility<sup>&trade;</sup> is a trademark of Matt Bertram, filed with the USPTO (filed, not yet registered). <!-- TODO(Matt): replace with the exact trademark legal line + issuing entity. --></p>
+    </footer>
   </main>
 </body>
 </html>
