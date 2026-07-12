@@ -4,9 +4,9 @@
 import type { ScoreResult, PillarKey, Tier, MaturityRung } from "../scorer/types.js";
 
 const TIER_LABEL: Record<Tier, string> = {
-  none: "Not yet certified",
-  certified: "LLM Visibility™ Certified",
-  gold: "LLM Visibility™ Gold",
+  none: "Not yet on-page ready",
+  certified: "LLM Visibility™ Certified (on-page ready)",
+  gold: "LLM Visibility™ Gold (on-page ready)",
 };
 
 function bar(readiness: number): string {
@@ -17,12 +17,25 @@ function bar(readiness: number): string {
 /** Human-readable single-URL report (default CLI output). */
 export function formatReport(r: ScoreResult, url: string): string {
   const lines: string[] = [];
-  lines.push(`LLM Visibility™ audit — ${url}`);
+  lines.push(`LLM Visibility™ on-page readiness audit — ${url}`);
   lines.push("═".repeat(64));
-  lines.push(`Composite score:  ${r.composite}/100`);
-  lines.push(`Tier:             ${TIER_LABEL[r.tier]}`);
-  lines.push(`Maturity rung:    ${r.maturity.label}${r.maturity.ceilingReached ? " (on-page ceiling)" : ""}`);
-  lines.push(`Eligibility:      ${r.eligibility.eligible ? "✓" : "✗"} ${r.eligibility.reason}`);
+  lines.push(`Composite readiness:  ${r.composite}/100`);
+  lines.push(`Tier:                 ${TIER_LABEL[r.tier]}`);
+  lines.push(`Maturity rung:        ${r.maturity.label}${r.maturity.ceilingReached ? " (on-page ceiling)" : ""}`);
+  lines.push(`Eligibility:          ${r.eligibility.eligible ? "✓" : "✗"} ${r.eligibility.reason}`);
+  lines.push("");
+  lines.push(
+    "This measures how READY your page is to be cited by AI — how cleanly an answer",
+  );
+  lines.push(
+    "engine can retrieve, understand, and attribute it. It is NOT a prediction that",
+  );
+  lines.push(
+    "you WILL be cited: real citation is dominated by off-domain authority and brand",
+  );
+  lines.push(
+    "mentions, which a single-page audit can't see (see the off-domain roadmap below).",
+  );
   lines.push("");
 
   lines.push("Pillars");

@@ -115,6 +115,21 @@ function extractText($: cheerio.CheerioAPI): string {
   return $("body").text().replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Did we actually retrieve scorable page content, or just a shell?
+ *
+ * A JS-rendered SPA or an anti-bot challenge page (Cloudflare "Just a moment…",
+ * Britannica/Cloudflare-learning to a non-JS fetch) returns HTTP 200 with a body
+ * that has navigation/boilerplate text but NO headings and NO structured data.
+ * Scoring that body produces a misleading 0. A genuinely readable web page always
+ * has at least one heading or JSON-LD block — so we require one of those. Visible
+ * text alone does NOT count (nav menus and footers clear any length threshold).
+ * The caller treats an unscorable page as an error (unscorable), never a 0-score.
+ */
+export function hasScorableContent(s: PageScrape): boolean {
+  return s.jsonLd.length > 0 || s.headings.length > 0;
+}
+
 export function htmlToScrape(rawHtml: string, ctx: ScrapeContext): PageScrape {
   const $ = cheerio.load(rawHtml);
 

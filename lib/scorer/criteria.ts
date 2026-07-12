@@ -3,9 +3,11 @@
 // Each scorer is a pure function PageScrape -> CategoryResult. These atomic
 // measurements roll up into pillars in index.ts (Foundation / Validation /
 // Ingestion); crawler_access feeds the eligibility gate, not the composite.
-// NOTE: these point weights are provisional and will be tuned during calibration
-// (rank-ordering against ~30-50 sites with known real LLM-citation status). The
-// methodology PAGE publishes the categories and principles, NOT these exact weights.
+// NOTE: these category point-maxes are SET from the 2026 citation-driver research
+// (.private/research/ai-citation-drivers-2026.md) — schema down-weighted, entity/brand
+// up-weighted per the evidence, not arbitrary. Treat them as a first calibrated pass:
+// the numeric TIER BANDS still get confirmed against the ~30-50-site calibration run,
+// and the methodology PAGE publishes the categories and principles, NOT these weights.
 
 import type { PageScrape, CategoryResult, JsonLdBlock } from "./types.js";
 
@@ -59,25 +61,28 @@ function findNode(blocks: JsonLdBlock[], typeNames: string[]): Record<string, un
 
 const clamp = (n: number, max: number): number => Math.max(0, Math.min(max, n));
 
-// ---------- 1. Structured data / Schema (max 20) ----------
+// ---------- 1. Structured data / Schema (max 10) ----------
+// Down-weighted from 20: the 2026 research finds schema markup is the WEAKEST
+// on-page citation lever (Ahrefs diff-in-diff: +2.4%). It's retrieval/eligibility
+// hygiene, not a differentiator — so it earns half of what entity (sameAs) does.
 
 export function scoreSchema(s: PageScrape): CategoryResult {
   const types = collectTypes(s.jsonLd);
   const evidence: string[] = [];
   let pts = 0;
   if (types.size > 0) {
-    pts += 8;
+    pts += 4;
     evidence.push(`JSON-LD present: ${[...types].join(", ")}`);
   } else {
     evidence.push("No JSON-LD structured data found");
   }
-  if (hasAnyType(types, ["Organization", "WebSite", "LocalBusiness"])) pts += 4;
+  if (hasAnyType(types, ["Organization", "WebSite", "LocalBusiness"])) pts += 2;
   else evidence.push("Add Organization/WebSite schema (entity identity)");
-  if (hasAnyType(types, ["Article", "BlogPosting", "NewsArticle", "WebPage"])) pts += 4;
+  if (hasAnyType(types, ["Article", "BlogPosting", "NewsArticle", "WebPage"])) pts += 2;
   else evidence.push("Add Article/WebPage content schema");
-  if (hasAnyType(types, ["FAQPage", "QAPage", "HowTo", "BreadcrumbList"])) pts += 4;
+  if (hasAnyType(types, ["FAQPage", "QAPage", "HowTo", "BreadcrumbList"])) pts += 2;
   else evidence.push("Add FAQ/HowTo/Breadcrumb schema (high value for AI answers)");
-  return { key: "schema", label: "Structured data / Schema", points: clamp(pts, 20), maxPoints: 20, evidence };
+  return { key: "schema", label: "Structured data / Schema", points: clamp(pts, 10), maxPoints: 10, evidence };
 }
 
 // ---------- 2. Citations, statistics & quotes (max 15) ----------
@@ -134,10 +139,12 @@ export function scoreAuthorTrust(s: PageScrape): CategoryResult {
   return { key: "author_trust", label: "Author trust", points: clamp(pts, 5), maxPoints: 5, evidence };
 }
 
-// ---------- 3b. Entity identity (max 10) → FOUNDATION pillar ----------
-// Book: entity resolution is the heaviest theme (68 "entity" mentions). sameAs
-// to Wikidata/Crunchbase/LinkedIn turns "maybe it's them" into "it's definitely
-// them"; About/Contact + a declared Organization name anchor canonical truth.
+// ---------- 3b. Entity identity (max 16) → FOUNDATION pillar ----------
+// Up-weighted from 10 and made the heaviest Foundation signal: entity resolution
+// is the book's #1 theme (68 "entity" mentions) AND the research-supported part of
+// Foundation (Google AI Mode favors Knowledge-Graph entities; "schema for its own
+// sake doesn't"). sameAs to Wikidata/Crunchbase/LinkedIn turns "maybe it's them"
+// into "it's definitely them" — so sameAs carries the lion's share of the points.
 
 export function scoreEntity(s: PageScrape): CategoryResult {
   const evidence: string[] = [];
@@ -148,7 +155,7 @@ export function scoreEntity(s: PageScrape): CategoryResult {
 
   const sameAs = entity && Array.isArray(entity["sameAs"]) ? entity["sameAs"] : [];
   if (sameAs.length >= 1) {
-    pts += 4;
+    pts += 8;
     evidence.push(`${sameAs.length} sameAs entity link(s) (knowledge-graph resolution)`);
   } else {
     evidence.push("No sameAs entity links — add LinkedIn/Crunchbase/Wikidata to resolve identity");
@@ -162,15 +169,21 @@ export function scoreEntity(s: PageScrape): CategoryResult {
   }
 
   if (org && typeof org["name"] === "string") {
-    pts += 3;
+    pts += 5;
     evidence.push(`Organization declared: ${org["name"]}`);
   } else {
     evidence.push("No Organization name in schema");
   }
-  return { key: "entity", label: "Entity identity", points: clamp(pts, 10), maxPoints: 10, evidence };
+  return { key: "entity", label: "Entity identity", points: clamp(pts, 16), maxPoints: 16, evidence };
 }
 
 // ---------- 4. LLM crawler access (max 20) ----------
+// Scored on robots.txt policy ONLY. The per-bot fetch is a spoofed-UA probe (a
+// residential request carrying a GPTBot/ClaudeBot UA); anti-bot WAFs 403 it as a
+// matter of course while real, IP-verified AI crawlers get through — so a probe
+// block is ADVISORY: surfaced as evidence, never deducted from the score. This
+// keeps the punch-list line consistent with the eligibility gate in index.ts,
+// which likewise treats the probe as advisory-only.
 
 const TARGET_BOTS = ["GPTBot", "ClaudeBot", "Google-Extended"] as const;
 
@@ -178,9 +191,7 @@ export function scoreCrawlerAccess(s: PageScrape): CategoryResult {
   const evidence: string[] = [];
   const access = TARGET_BOTS.map((bot) => s.botAccess.find((b) => b.bot === bot));
   const allowed = access.filter((a) => a?.allowedByRobots).length;
-  const fetchOk = access.filter((a) => a?.fetchStatus === 200).length;
-  const robotsPts = (allowed / TARGET_BOTS.length) * 10;
-  const fetchPts = (fetchOk / TARGET_BOTS.length) * 10;
+  const robotsPts = (allowed / TARGET_BOTS.length) * 20;
 
   TARGET_BOTS.forEach((bot, i) => {
     const a = access[i];
@@ -188,16 +199,20 @@ export function scoreCrawlerAccess(s: PageScrape): CategoryResult {
       evidence.push(`${bot}: not tested`);
       return;
     }
-    if (!a.allowedByRobots) evidence.push(`${bot}: BLOCKED by robots.txt`);
+    if (a.allowedByRobots) evidence.push(`${bot}: allowed by robots.txt`);
+    else evidence.push(`${bot}: BLOCKED by robots.txt`);
+    // Advisory only — a WAF/anti-bot 403 to our crawler-UA probe does NOT cost points.
     if (a.fetchStatus !== null && a.fetchStatus !== 200)
-      evidence.push(`${bot}: fetch returned ${a.fetchStatus} (WAF/CDN block?)`);
-    if (a.allowedByRobots && a.fetchStatus === 200) evidence.push(`${bot}: allowed`);
+      evidence.push(
+        `${bot}: note — WAF/CDN returned ${a.fetchStatus} to our crawler-UA probe ` +
+          `(advisory; verify your firewall allowlists verified AI-crawler IP ranges)`,
+      );
   });
 
   return {
     key: "crawler_access",
     label: "LLM crawler access",
-    points: Math.round(clamp(robotsPts + fetchPts, 20)),
+    points: Math.round(clamp(robotsPts, 20)),
     maxPoints: 20,
     evidence,
   };
@@ -272,7 +287,11 @@ export function scoreFreshness(s: PageScrape, now: Date): CategoryResult {
   return { key: "freshness", label: "Freshness", points: pts, maxPoints: 5, evidence: [note] };
 }
 
-// ---------- 7. On-page brand signals (max 10) ----------
+// ---------- 7. On-page brand signals (max 14) ----------
+// Up-weighted from 10 as part of the entity-weighted Foundation: trademark anchors
+// (consistent name echoed in schema + title/H1) are the book's FOUNDATION layer —
+// "selection levers," not decoration. Carries more than schema markup, less than
+// the cross-web sameAs entity resolution in scoreEntity.
 
 export function scoreBrand(s: PageScrape): CategoryResult {
   const evidence: string[] = [];
@@ -281,7 +300,7 @@ export function scoreBrand(s: PageScrape): CategoryResult {
   const name = entity && typeof entity["name"] === "string" ? entity["name"] : null;
 
   if (name) {
-    pts += 4;
+    pts += 5;
     evidence.push(`Brand entity: ${name}`);
   } else {
     evidence.push("No brand entity (Organization/Person) in schema");
@@ -289,7 +308,7 @@ export function scoreBrand(s: PageScrape): CategoryResult {
 
   const sameAs = entity && Array.isArray(entity["sameAs"]) ? entity["sameAs"] : [];
   if (sameAs.length >= 2) {
-    pts += 3;
+    pts += 4;
     evidence.push(`${sameAs.length} social/profile links (sameAs)`);
   } else {
     evidence.push("Fewer than 2 social/profile links");
@@ -301,11 +320,11 @@ export function scoreBrand(s: PageScrape): CategoryResult {
       .map((h) => h.text)
       .join(" ")}`.toLowerCase();
     if (hay.includes(name.toLowerCase())) {
-      pts += 3;
+      pts += 5;
       evidence.push("Brand name in title/H1");
     } else {
       evidence.push("Brand name not in title/H1");
     }
   }
-  return { key: "brand", label: "On-page brand signals", points: clamp(pts, 10), maxPoints: 10, evidence };
+  return { key: "brand", label: "On-page brand signals", points: clamp(pts, 14), maxPoints: 14, evidence };
 }

@@ -9,12 +9,23 @@
 // retrieved throws ScrapeError. The caller surfaces "couldn't reach your site,
 // retry" — it must NEVER become a 0-score masquerading as a real result.
 
-import { htmlToScrape } from "./parse.js";
+import { htmlToScrape, hasScorableContent } from "./parse.js";
 import { isPathAllowed } from "./robots.js";
 import type { PageScrape, BotAccess } from "../scorer/types.js";
 
 export class ScrapeError extends Error {
   override name = "ScrapeError";
+}
+
+/**
+ * Does this ScrapeError describe a problem with the TARGET page (offline, anti-bot
+ * block, non-2xx, JS-rendered shell, empty) versus a problem on OUR side (Firecrawl
+ * out of credits / rate-limited / down)? Drives the API's response: target issues
+ * are a 502 "we couldn't fetch that page"; our-side issues are a 503 "try again".
+ * Pure + tested so the classification can't silently drift from the thrown messages.
+ */
+export function isTargetScrapeError(message: string): boolean {
+  return /no HTML|unreachable|no scorable content|to a direct fetch|could not scrape/i.test(message);
 }
 
 /** The bots whose access the rubric cares about (token = robots.txt UA token). */
@@ -121,8 +132,11 @@ async function fetchRobots(finalUrl: string, fetchImpl: FetchImpl, timeoutMs: nu
 
 /** FREE page fetch: a direct GET of the URL. No API key, no JS rendering — enough
  *  for the on-page signals the scorer reads (schema, meta, headings, links) on
- *  server-rendered HTML. Non-2xx flows through (the eligibility gate handles it);
- *  only a network failure or an empty 2xx body is a hard ScrapeError. */
+ *  server-rendered HTML. A non-2xx response (after following redirects) means the
+ *  free fetch could not retrieve the live page — almost always an anti-bot block —
+ *  so it's a ScrapeError (unscorable), NOT a 0-score. The optional Firecrawl path,
+ *  which renders and returns the real status, still flows non-2xx through to the
+ *  eligibility gate. A network failure or empty body is likewise a ScrapeError. */
 export async function fetchPageDirect(url: string, fetchImpl: FetchImpl, timeoutMs: number): Promise<FirecrawlScrape> {
   let res: Response;
   try {
@@ -140,7 +154,14 @@ export async function fetchPageDirect(url: string, fetchImpl: FetchImpl, timeout
   const statusCode = res.status;
   const finalUrl = res.url || url;
   const rawHtml = await res.text().catch(() => "");
-  if (statusCode >= 200 && statusCode < 300 && rawHtml.trim().length === 0) {
+  if (statusCode < 200 || statusCode >= 300) {
+    await res.body?.cancel().catch(() => {});
+    throw new ScrapeError(
+      `${url} returned HTTP ${statusCode} to a direct fetch — the live page wasn't retrievable ` +
+        `(the site likely blocks automated visitors). Re-run with a rendering fetch (Firecrawl) to score it.`,
+    );
+  }
+  if (rawHtml.trim().length === 0) {
     throw new ScrapeError(`No HTML returned for ${url} — site unreachable or empty`);
   }
   return { rawHtml, statusCode, finalUrl };
@@ -207,5 +228,17 @@ export async function scrapeUrl(url: string, opts: ScrapeOptions = {}): Promise<
   );
 
   // 4. Pure transform into the scorer's input contract.
-  return htmlToScrape(rawHtml, { url, finalUrl, statusCode, robots, botAccess });
+  const scrape = htmlToScrape(rawHtml, { url, finalUrl, statusCode, robots, botAccess });
+
+  // 5. Guard against fabricated 0-scores: a 2xx response that yields no scorable
+  // content is a JS-rendered SPA or an anti-bot challenge shell, not a real page.
+  // Surface it as an error (the caller retries / marks it unscorable) rather than
+  // scoring an empty shell as 0. Non-2xx pages flow through to the eligibility gate.
+  if (statusCode >= 200 && statusCode < 300 && !hasScorableContent(scrape)) {
+    throw new ScrapeError(
+      `${url} returned no scorable content — the page is likely JavaScript-rendered or behind an anti-bot wall. ` +
+        `Re-run with a rendering fetch (Firecrawl) to score it.`,
+    );
+  }
+  return scrape;
 }

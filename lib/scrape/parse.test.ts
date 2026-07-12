@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { htmlToScrape, type ScrapeContext } from "./parse";
+import { htmlToScrape, hasScorableContent, type ScrapeContext } from "./parse";
 
 const ctx: ScrapeContext = {
   url: "https://example.com/post",
@@ -143,5 +143,41 @@ describe("htmlToScrape — minimal/empty page", () => {
     const s = htmlToScrape(html, redirected);
     expect(s.links.find((l) => l.href.includes("/internal"))?.external).toBe(false);
     expect(s.links.find((l) => l.href.includes("example.com"))?.external).toBe(true);
+  });
+});
+
+describe("hasScorableContent — shell / JS-wall detection", () => {
+  it("treats a real content page as scorable", () => {
+    expect(hasScorableContent(htmlToScrape(FULL_HTML, ctx))).toBe(true);
+  });
+
+  it("treats an empty body as not scorable (so the caller errors instead of fabricating a 0)", () => {
+    expect(hasScorableContent(htmlToScrape("<html><body></body></html>", ctx))).toBe(false);
+  });
+
+  it("treats a JS-challenge shell (title only, no structure, trivial text) as not scorable", () => {
+    const shell = `<html><head><title>Just a moment...</title></head>
+      <body><div>Checking your browser before accessing the site.</div></body></html>`;
+    expect(hasScorableContent(htmlToScrape(shell, ctx))).toBe(false);
+  });
+
+  it("counts structured data as scorable even with little visible text", () => {
+    const jsonOnly = `<html><head>
+      <script type="application/ld+json">{"@type":"Organization","name":"Acme"}</script>
+      </head><body></body></html>`;
+    expect(hasScorableContent(htmlToScrape(jsonOnly, ctx))).toBe(true);
+  });
+
+  it("counts a page with real headings as scorable even with little text", () => {
+    const headed = `<html><body><h1>About Acme</h1><h2>What we do</h2></body></html>`;
+    expect(hasScorableContent(htmlToScrape(headed, ctx))).toBe(true);
+  });
+
+  it("treats a hydration shell (nav boilerplate, NO headings, NO structured data) as not scorable", () => {
+    // Britannica / Cloudflare-learning return this to a non-JS fetch: lots of nav
+    // text but zero headings and zero JSON-LD. Real readable pages always have at
+    // least one heading or schema — boilerplate text alone must NOT count.
+    const navShell = `<html><body><nav>${"Home Products Pricing About Blog Careers Contact Login Sign up ".repeat(20)}</nav></body></html>`;
+    expect(hasScorableContent(htmlToScrape(navShell, ctx))).toBe(false);
   });
 });

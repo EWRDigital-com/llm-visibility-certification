@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { scoreSite, tierFor, bandFor } from "./index";
-import { scoreSchema, scoreFreshness, scoreEntity, scoreAuthorTrust, scoreCrawlerAccess } from "./criteria";
+import { scoreSchema, scoreFreshness, scoreEntity, scoreAuthorTrust, scoreCrawlerAccess, scoreBrand } from "./criteria";
 import type { PageScrape, PillarResult, PillarKey } from "./types";
 
 const NOW = new Date("2026-06-26T00:00:00Z");
@@ -126,9 +126,16 @@ describe("scoreSite — composite, pillars, tier", () => {
   it("rolls atomic measurements into the right pillar readiness", () => {
     const r = scoreSite(goodScrape(), { now: NOW });
     const byKey = Object.fromEntries(r.pillars.map((p) => [p.key, p.readiness]));
-    expect(byKey.foundation).toBe(100); // schema 20 + entity 10 + brand 10
+    expect(byKey.foundation).toBe(100); // schema 10 + entity 16 + brand 14 of 40
     expect(byKey.validation).toBe(80); // citations 11 + author 5 of 20
-    expect(byKey.ingestion).toBe(100); // answer_format 15 + freshness 5
+    expect(byKey.ingestion).toBe(100); // answer_format 15 + freshness 5 of 20
+  });
+
+  it("weights the pillars per the research-calibrated split (Validation heaviest, schema-light Foundation)", () => {
+    const byKey = Object.fromEntries(scoreSite(goodScrape(), { now: NOW }).pillars.map((p) => [p.key, p.weight]));
+    expect(byKey.foundation).toBeCloseTo(0.3);
+    expect(byKey.validation).toBeCloseTo(0.4);
+    expect(byKey.ingestion).toBeCloseTo(0.3);
   });
 
   it("does not certify a near-empty, crawler-blocked page", () => {
@@ -189,6 +196,25 @@ describe("scoreSite — eligibility gate", () => {
     expect(r.eligibility.eligible).toBe(false);
     expect(r.eligibility.reason).toMatch(/HTTP 404/);
   });
+
+  it("stays eligible when robots.txt allows the bots but a WAF 403s our spoofed-UA probe", () => {
+    // Real AI crawlers are identified by verified IP ranges, not UA. A residential
+    // request carrying a GPTBot/ClaudeBot UA gets 403'd by anti-bot WAFs as a matter
+    // of course — that must NOT mark an otherwise-allowed page ineligible (the Mayo /
+    // WebMD / NerdWallet false-negative from calibration Run 1).
+    const wafProbed: PageScrape = {
+      ...goodScrape(),
+      robots: { fetched: true, raw: "User-agent: *\nAllow: /" },
+      botAccess: [
+        { bot: "GPTBot", allowedByRobots: true, fetchStatus: 403 },
+        { bot: "ClaudeBot", allowedByRobots: true, fetchStatus: 403 },
+        { bot: "Google-Extended", allowedByRobots: true, fetchStatus: 403 },
+      ],
+    };
+    const r = scoreSite(wafProbed, { now: NOW });
+    expect(r.eligibility.eligible).toBe(true);
+    expect(r.eligibility.reason).toMatch(/probe|WAF/i);
+  });
 });
 
 describe("scoreSite — maturity ladder (capped at Recognized)", () => {
@@ -239,19 +265,19 @@ describe("bandFor — pure composite → band", () => {
 });
 
 describe("tierFor — eligibility gate + per-pillar floor", () => {
-  const strong = [pill("foundation", 100, 0.4), pill("validation", 100, 0.35), pill("ingestion", 100, 0.25)];
+  const strong = [pill("foundation", 100, 0.3), pill("validation", 100, 0.4), pill("ingestion", 100, 0.3)];
 
   it("ineligible always yields none, regardless of composite", () => {
     expect(tierFor(95, strong, false)).toBe("none");
   });
 
   it("a dead pillar (<50) blocks Gold, dropping it to Certified", () => {
-    const lopsided = [pill("foundation", 100, 0.4), pill("validation", 100, 0.35), pill("ingestion", 40, 0.25)];
+    const lopsided = [pill("foundation", 100, 0.3), pill("validation", 100, 0.4), pill("ingestion", 40, 0.3)];
     expect(tierFor(85, lopsided, true)).toBe("certified");
   });
 
   it("a critically dead pillar (<40) blocks certification entirely", () => {
-    const starved = [pill("foundation", 100, 0.4), pill("validation", 100, 0.35), pill("ingestion", 20, 0.25)];
+    const starved = [pill("foundation", 100, 0.3), pill("validation", 100, 0.4), pill("ingestion", 20, 0.3)];
     expect(tierFor(85, starved, true)).toBe("none");
   });
 
@@ -264,8 +290,10 @@ describe("tierFor — eligibility gate + per-pillar floor", () => {
 // ---------- Atomic measurements (unchanged logic, regrouped) ----------
 
 describe("scoreSchema", () => {
-  it("awards full marks for Org + Article + FAQ schema", () => {
-    expect(scoreSchema(goodScrape()).points).toBe(20);
+  it("awards full marks for Org + Article + FAQ schema (max 10 — schema is light per research)", () => {
+    const r = scoreSchema(goodScrape());
+    expect(r.points).toBe(10);
+    expect(r.maxPoints).toBe(10);
   });
   it("scores zero with no JSON-LD and lists the gaps", () => {
     const r = scoreSchema(minimalScrape());
@@ -275,13 +303,25 @@ describe("scoreSchema", () => {
 });
 
 describe("scoreEntity (Foundation)", () => {
-  it("rewards sameAs + about + org name", () => {
+  it("rewards sameAs + about + org name, weighted heavily toward sameAs (max 16)", () => {
     const r = scoreEntity(goodScrape());
-    expect(r.points).toBe(10);
+    expect(r.points).toBe(16);
+    expect(r.maxPoints).toBe(16);
     expect(r.key).toBe("entity");
   });
   it("scores zero with no entity signals", () => {
     expect(scoreEntity(minimalScrape()).points).toBe(0);
+  });
+});
+
+describe("scoreBrand (Foundation)", () => {
+  it("rewards a named entity + profiles + name in title/H1 (max 14)", () => {
+    const r = scoreBrand(goodScrape());
+    expect(r.points).toBe(14);
+    expect(r.maxPoints).toBe(14);
+  });
+  it("scores zero with no brand entity", () => {
+    expect(scoreBrand(minimalScrape()).points).toBe(0);
   });
 });
 
@@ -300,10 +340,23 @@ describe("scoreCrawlerAccess (eligibility detail)", () => {
   it("full marks when all target bots are allowed and fetch 200", () => {
     expect(scoreCrawlerAccess(goodScrape()).points).toBe(20);
   });
-  it("flags BLOCKED when robots disallows the bots", () => {
+  it("flags BLOCKED and scores zero when robots disallows the bots", () => {
     const r = scoreCrawlerAccess(minimalScrape());
-    expect(r.points).toBe(10); // robots 0/3, fetch 3/3 -> 0 + 10
+    expect(r.points).toBe(0); // robots 0/3 -> 0; the fetch probe is advisory, not scored
     expect(r.evidence.join(" ")).toMatch(/BLOCKED by robots\.txt/);
+  });
+  it("gives full marks when robots allows the bots even if a WAF 403s our probe (advisory only)", () => {
+    const wafProbed: PageScrape = {
+      ...goodScrape(),
+      botAccess: [
+        { bot: "GPTBot", allowedByRobots: true, fetchStatus: 403 },
+        { bot: "ClaudeBot", allowedByRobots: true, fetchStatus: 403 },
+        { bot: "Google-Extended", allowedByRobots: true, fetchStatus: 403 },
+      ],
+    };
+    const r = scoreCrawlerAccess(wafProbed);
+    expect(r.points).toBe(20); // robots 3/3 -> 20; the 403 probe does not deduct
+    expect(r.evidence.join(" ")).toMatch(/advisory/i);
   });
 });
 

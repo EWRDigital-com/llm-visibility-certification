@@ -9,9 +9,10 @@
 // (the honest ceiling for an on-page-only audit). Off-domain pillars are shown
 // as a roadmap, never scored from one URL.
 //
-// NOTE: pillar weights and tier bands are provisional — tuned during calibration
-// (rank-ordering against ~30-50 sites with known real LLM-citation status). The
-// methodology PAGE publishes the categories and principles, NOT these numbers.
+// NOTE: pillar weights are SET from the 2026 citation-driver research (see
+// PILLAR_SPECS below); the TIER BANDS (60/80) remain provisional until confirmed by
+// the ~30-50-site calibration run. The methodology PAGE publishes the categories and
+// principles, NOT these numbers.
 
 import type {
   PageScrape,
@@ -49,10 +50,16 @@ interface PillarSpec {
   categories: CategoryKey[];
 }
 
+// Weights calibrated to the 2026 citation-driver research (.private/research/
+// ai-citation-drivers-2026.md): on-page citations/stats/quotes (Validation) is the
+// single best-evidenced on-page lever (GEO paper, +30-40%); answer-formatting
+// (Ingestion) scores highest in practitioner data; schema is the WEAKEST on-page
+// lever (+2.4%), so Foundation is down-weighted AND made entity-weighted internally
+// (see criteria.ts maxes). Weights sum to 1.
 const PILLAR_SPECS: PillarSpec[] = [
-  { key: "foundation", label: "Foundation", aiPillar: "Citations Consistency", weight: 0.4, categories: ["schema", "entity", "brand"] },
-  { key: "validation", label: "Validation", aiPillar: "Authority Trust", weight: 0.35, categories: ["citations", "author_trust"] },
-  { key: "ingestion", label: "Ingestion", aiPillar: "LLM Surfacing", weight: 0.25, categories: ["answer_format", "freshness"] },
+  { key: "foundation", label: "Foundation", aiPillar: "Citations Consistency", weight: 0.3, categories: ["schema", "entity", "brand"] },
+  { key: "validation", label: "Validation", aiPillar: "Authority Trust", weight: 0.4, categories: ["citations", "author_trust"] },
+  { key: "ingestion", label: "Ingestion", aiPillar: "LLM Surfacing", weight: 0.3, categories: ["answer_format", "freshness"] },
 ];
 
 // Severity order for bottleneck tie-breaks: a lower (more foundational) layer
@@ -77,7 +84,12 @@ const ANSWER_ENGINE_BOTS = ["GPTBot", "ClaudeBot"] as const;
 function evalEligibility(s: PageScrape, detail: CategoryResult): EligibilityResult {
   const access = ANSWER_ENGINE_BOTS.map((b) => s.botAccess.find((x) => x.bot === b));
   const robotsBlocked = access.filter((a) => a && !a.allowedByRobots).length;
-  const fetchBlocked = access.filter((a) => a && a.fetchStatus !== null && a.fetchStatus !== 200).length;
+  // The per-bot fetch is a SPOOFED-UA probe: a residential request carrying a
+  // GPTBot/ClaudeBot UA. Anti-bot WAFs 403 it as a matter of course, while real
+  // AI crawlers (identified by verified IP ranges, not UA) get through. So the
+  // probe is ADVISORY ONLY — it never flips eligibility. Eligibility keys off the
+  // two signals we can trust: the real page status, and robots.txt policy.
+  const probeBlocked = access.filter((a) => a && a.fetchStatus !== null && a.fetchStatus !== 200).length;
   const status2xx = s.statusCode >= 200 && s.statusCode < 300;
 
   if (!status2xx) {
@@ -86,11 +98,17 @@ function evalEligibility(s: PageScrape, detail: CategoryResult): EligibilityResu
   if (robotsBlocked >= ANSWER_ENGINE_BOTS.length) {
     return { eligible: false, reason: "robots.txt blocks every major AI answer-engine crawler (GPTBot + ClaudeBot)", detail };
   }
-  if (fetchBlocked >= ANSWER_ENGINE_BOTS.length) {
-    return { eligible: false, reason: "Every major AI crawler is blocked at fetch (WAF/CDN) despite robots.txt", detail };
+  if (robotsBlocked > 0) {
+    return { eligible: true, reason: "Retrievable, but robots.txt restricts at least one major AI crawler", detail };
   }
-  if (robotsBlocked > 0 || fetchBlocked > 0) {
-    return { eligible: true, reason: "Retrievable, but at least one major AI crawler is restricted", detail };
+  if (probeBlocked > 0) {
+    return {
+      eligible: true,
+      reason:
+        "Retrievable (robots.txt allows AI crawlers); note: a WAF/anti-bot rule blocked our crawler-UA probe — " +
+        "verify your firewall allowlists verified AI-crawler IP ranges",
+      detail,
+    };
   }
   return { eligible: true, reason: "Retrievable by the major AI answer-engine crawlers", detail };
 }

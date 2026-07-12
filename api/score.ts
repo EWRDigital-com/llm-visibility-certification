@@ -6,7 +6,7 @@
 // Node.js runtime (cheerio + node fetch are not edge-safe).
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { scrapeUrl, ScrapeError } from "../lib/scrape/firecrawl.js";
+import { scrapeUrl, ScrapeError, isTargetScrapeError } from "../lib/scrape/firecrawl.js";
 import { scoreSite } from "../lib/scorer/index.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
@@ -34,13 +34,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       // Log the real cause server-side (Vercel logs); show the user a clean message.
       console.error(`[score] scrape failed for ${target.toString()}: ${e.message}`);
       // Distinguish a problem with the user's target page from a problem on our
-      // side (out of credits / rate-limited / scraper down). Only the specific
-      // "couldn't get the page" messages are the user's URL; everything else
-      // (Firecrawl HTTP 402/429/5xx, network, malformed) is our capacity issue.
-      const targetIssue = /no HTML|unreachable or empty|could not scrape/i.test(e.message);
-      if (targetIssue) {
+      // side (out of credits / rate-limited / scraper down). Target-page failures
+      // (block / non-2xx / JS-shell / empty / offline) are the user's URL;
+      // everything else (Firecrawl HTTP 402/429/5xx, network, malformed) is ours.
+      if (isTargetScrapeError(e.message)) {
         res.status(502).json({
-          error: "We couldn't fetch that page. It may be offline, blocking automated visitors, or not returning HTML — check the URL and try again.",
+          error: "We couldn't fetch that page. It may be offline, blocking automated visitors, or relying on JavaScript to render — check the URL and try again.",
         });
       } else {
         res.status(503).json({

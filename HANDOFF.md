@@ -1,6 +1,37 @@
 # HANDOFF — LLM Visibility Certification™
 
-Last updated: 2026-06-27. Read this first when resuming. Built with **gstack** — keep using it.
+Last updated: 2026-07-12 (session 3 — recalibration landed). Read this first when resuming. Built with **gstack** — keep using it.
+
+## ⭐ SESSION 2026-07-12 — RECALIBRATION COMMITTED (reconciled; deploy via CLI)
+Matt locked the two gating decisions: (a) **score label = keep the "LLM Visibility™ Score" mark**, with the
+subtitle always reading "on-page readiness audit" + the explicit "NOT a citation prediction" disclaimer (already
+carried in `lib/report/format.ts`); (b) **issuing entity = independent, under Matt Bertram** (LLM Visibility™ as
+its own authority, not an EWR funnel) — the exact TM legal string still needs pasting into the `TODO(Matt)` in
+`public/index.html`. Reconciled the two inconsistencies the 06-27 recalibration left, then committed the whole
+change set on HEAD:
+1. **crawler_access no longer scores the advisory UA probe** (`criteria.ts scoreCrawlerAccess`) — now robots-only,
+   so a robots-allowed page whose WAF 403s our crawler-UA probe scores 20/20, matching the eligibility gate. +1 test.
+2. **Comment contradiction fixed** — headers in `index.ts`/`criteria.ts` now say pillar weights + category maxes are
+   SET from the 2026 citation-driver research, while the **tier bands (60/80) stay provisional** pending the
+   calibration run (no more "provisional… will be tuned" vs "calibrated" clash).
+**94 tests green, tsc clean.** Deploy to prod is manual: `vercel deploy --prod --yes` (GitHub→Vercel auto-deploy
+still not firing). NEXT: Phase-0 calibration gate (approve the 30-50-site list → `npm run score:batch` → finalize
+60/80 + rung cutoffs), paste the TM legal line, then Phase 1a. Full remaining-work map lives in the session roadmap.
+
+## ⭐ SESSION 2026-06-27 PM — RECALIBRATION (now committed 2026-07-12; see note above)
+Matt's decision: **score = on-page READINESS, not a citation prediction.** This RETIRES the old launch
+gate (Spearman of composite vs real citation) — under readiness framing, modalpoint 89 > Mayo 35 is
+CORRECT (Mayo wins citations off-domain, which v1 doesn't measure). New gate = readiness face-validity +
+no fabricated scores + blocked sites handled honestly. Shipped (all TDD, **93 tests green**, tsc clean):
+1. **Unscorable guard** — 2xx page with no headings AND no JSON-LD = JS/anti-bot shell → error row, never 0 (`lib/scrape/parse.ts` `hasScorableContent`).
+2. **Non-2xx free-fetch = unscorable** (403/404 → ScrapeError, not 0; `lib/scrape/firecrawl.ts` `fetchPageDirect`).
+3. **Eligibility false-negatives fixed** — spoofed-UA fetch probe no longer flips eligibility; keys off robots.txt + real status (Mayo now eligible; WebMD correctly ineligible = real robots block).
+4. **Reweight** per `.private/research/ai-citation-drivers-2026.md`: pillars 0.30/0.40/0.30; Foundation made entity-weighted (schema max 20→10, entity 10→16, brand 10→14) in `lib/scorer/{index,criteria}.ts`.
+5. **Report + API reframed** to readiness; new `isTargetScrapeError` so anti-bot/JS sites return clean 502 (not 503 "at capacity").
+Results: `.private/calibration/results-run2.csv` + `run2-findings.md` (Run-1 `results.csv` preserved). 23 scored / 8 unscorable; no fabricated 0s.
+⚠️ **FREE-TIER BLIND SPOT:** ~26% of authority sites are anti-bot/JS-walled → unscorable on free fetch; scoring them needs Firecrawl (key currently 402).
+**OPEN DECISIONS (Matt)** in `.private/index-reframe-proposal.md`: (a) TM legal line + issuing entity; (b) score label keep vs "…Readiness Score"; (c) free tier accept-unscorable vs budget Firecrawl; (d) badge-on-readiness + finalize 60/80 thresholds.
+**NEXT:** decisions → `/gstack-review` → commit → `vercel deploy --prod` (auto-deploy NOT wired). Then Phase 1a (Next.js + Supabase + ownership-gated cert/verify).
 
 ## What this is
 Free, public certification platform for the standalone **LLM Visibility™** brand

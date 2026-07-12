@@ -51,6 +51,11 @@ describe("formatReport", () => {
     // freshness evidence string should appear somewhere
     expect(out).toMatch(/Updated \d+ days ago/);
   });
+
+  it("frames the score as on-page readiness, not a prediction of citation", () => {
+    expect(out).toMatch(/readiness/i);
+    expect(out).toMatch(/not a (prediction|guarantee)|does not (guarantee|predict)|off-domain/i);
+  });
 });
 
 describe("batchToCsv", () => {
