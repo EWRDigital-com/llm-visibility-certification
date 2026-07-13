@@ -218,3 +218,89 @@ export async function getReportBundle(submissionId: string): Promise<ReportBundl
     scores: (scores as ReportBundle["scores"]) ?? [],
   };
 }
+
+// ---------- Ownership verification / public credential (Phase 1b) ----------
+
+export async function getSubmission(id: string): Promise<SubmissionRow | null> {
+  const db = getServiceClient();
+  const { data, error } = await db.from("submissions").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`getSubmission: ${error.message}`);
+  return (data as SubmissionRow | null) ?? null;
+}
+
+export interface VerificationRecord {
+  id: string;
+  domain: string;
+  method: "dns_txt" | "well_known";
+  token: string;
+  status: string;
+}
+
+export async function createDomainVerification(v: {
+  submissionId: string;
+  domain: string;
+  method: "dns_txt" | "well_known";
+  token: string;
+}): Promise<void> {
+  const db = getServiceClient();
+  const { error } = await db.from("domain_verifications").insert({
+    submission_id: v.submissionId,
+    domain: v.domain,
+    method: v.method,
+    token: v.token,
+    status: "pending",
+  });
+  if (error) throw new Error(`createDomainVerification: ${error.message}`);
+}
+
+/** The most recent verification record for a submission carrying this token. */
+export async function findVerification(submissionId: string, token: string): Promise<VerificationRecord | null> {
+  const db = getServiceClient();
+  const { data, error } = await db
+    .from("domain_verifications")
+    .select("id, domain, method, token, status")
+    .eq("submission_id", submissionId)
+    .eq("token", token)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`findVerification: ${error.message}`);
+  return (data as VerificationRecord | null) ?? null;
+}
+
+export async function markVerificationVerified(id: string): Promise<void> {
+  const db = getServiceClient();
+  const { error } = await db
+    .from("domain_verifications")
+    .update({ status: "verified", verified_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(`markVerificationVerified: ${error.message}`);
+}
+
+/** Flip the domain's active certificate to public (idempotent: keeps an existing slug). */
+export async function publishCertificateForDomain(domain: string, slug: string): Promise<CertificateRow | null> {
+  const db = getServiceClient();
+  const active = await findActiveCertificateByDomain(domain);
+  if (!active) return null;
+  if (active.is_public && active.public_slug) return active;
+  const { data, error } = await db
+    .from("certificates")
+    .update({
+      is_public: true,
+      ownership_verified_at: new Date().toISOString(),
+      public_slug: active.public_slug ?? slug,
+    })
+    .eq("id", active.id)
+    .select("*")
+    .single();
+  if (error) throw new Error(`publishCertificateForDomain: ${error.message}`);
+  return data as CertificateRow;
+}
+
+/** Fetch a certificate by its public slug (any state — the caller applies canRenderPublic). */
+export async function getCertificateBySlug(slug: string): Promise<CertificateRow | null> {
+  const db = getServiceClient();
+  const { data, error } = await db.from("certificates").select("*").eq("public_slug", slug).maybeSingle();
+  if (error) throw new Error(`getCertificateBySlug: ${error.message}`);
+  return (data as CertificateRow | null) ?? null;
+}

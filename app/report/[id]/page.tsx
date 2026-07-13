@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getReportBundle, type ReportBundle } from "@/lib/db/repo";
 import { verifyAccessToken } from "@/lib/tokens";
+import PublishPanel from "./PublishPanel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -176,6 +177,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
         </>
       )}
+
+      <PublishPanel submissionId={submission.id} />
 
       <p className="mt-10 text-sm text-ink-faint">
         Off-domain pillars (Search Mentions, live LLM surfacing, off-domain authority, cross-web entity consistency) are

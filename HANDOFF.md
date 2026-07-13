@@ -1,6 +1,23 @@
 # HANDOFF — LLM Visibility Certification™
 
-Last updated: 2026-07-13 (session 4 — Phase 1a foundation built). Read this first when resuming. Built with **gstack** — keep using it.
+Last updated: 2026-07-13 (session 4 — Phase 1a + 1b built; Supabase provisioned). Read this first when resuming. Built with **gstack** — keep using it.
+
+## ⭐ SESSION 2026-07-13 (cont.) — PHASE 1b PUBLIC CREDENTIAL + SUPABASE PROVISIONED
+**Supabase is live:** project `llm-visibility-certification` (ref `vhhgykgigcbbxuqeuyyc`, org MBL – Personal, us-east-1,
+$0/mo). Migration `init_llm_visibility_cert_v1` applied — all 5 tables present + RLS on, `raw-scrapes` bucket created.
+`.env` scaffolded locally (real `SUPABASE_URL` + a generated `MAGIC_LINK_SECRET`). **`SUPABASE_SERVICE_ROLE_KEY` is
+still blank — the MCP cannot expose the secret, so Matt pastes it** (Dashboard → Project Settings → API → service_role)
+to run the live flow. **Phase 1b built (ownership-gated public credential):** `POST /api/verify-domain` (issue token →
+DNS-TXT or `.well-known` check → flip the domain's active cert `is_public=true` + public slug; authorized by the
+report_access cookie; SSRF-guards the well-known fetch), `/verify/[slug]` (public cert page, **noindex** in v1, 404s via
+`canRenderPublic` unless public + verified + not-revoked), `/badge/[slug]` (SVG; revoked → "revoked" state,
+missing/private → 404), and a `PublishPanel` on the report drives it. Repo adds getSubmission /
+createDomainVerification / findVerification / markVerificationVerified / publishCertificateForDomain /
+getCertificateBySlug. **`canRenderPublic` is THE ownership gate** — the most-tested unit (11 verify tests incl. the
+never-render-unverified / never-render-revoked cases). **Gate green: tsc clean, 124 tests, `next build` OK (9 routes).**
+Committed + pushed; NOT deployed (would replace the live definitional homepage + needs env).
+**E2E to run once the service_role key is set:** `npm run dev` → submit at `/` → the magic link prints to the server
+console (no email provider yet) → open it → `/report/[id]` → "Make this public".
 
 ## ⭐ SESSION 2026-07-13 — PHASE 1a FOUNDATION BUILT (code-complete; gate green; NOT yet run against live infra)
 Converted the repo from the static placeholder to a **Next.js (App Router + Tailwind)** app and built the
