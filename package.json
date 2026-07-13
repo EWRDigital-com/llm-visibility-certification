@@ -5,20 +5,31 @@
   "type": "module",
   "description": "Free public certification platform for the LLM Visibility™ brand",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "score": "tsx scripts/score-url.ts",
     "score:batch": "tsx scripts/score-batch.ts"
   },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "cheerio": "^1.2.0",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "@vercel/node": "^5.1.0",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
     "tsx": "^4.22.4",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
-  },
-  "dependencies": {
-    "cheerio": "^1.2.0"
   }
 }

@@ -1,6 +1,33 @@
 # HANDOFF — LLM Visibility Certification™
 
-Last updated: 2026-07-12 (session 3 — recalibration landed). Read this first when resuming. Built with **gstack** — keep using it.
+Last updated: 2026-07-13 (session 4 — Phase 1a foundation built). Read this first when resuming. Built with **gstack** — keep using it.
+
+## ⭐ SESSION 2026-07-13 — PHASE 1a FOUNDATION BUILT (code-complete; gate green; NOT yet run against live infra)
+Converted the repo from the static placeholder to a **Next.js (App Router + Tailwind)** app and built the
+Phase-1a private-audit pipeline end to end in code. **Gate green: `tsc` clean, 113 tests pass, `next build` OK.**
+Flow implemented:
+`/` submit form → `POST /api/audit` (email/consent validation · **SSRF gate** via `assertPublicHost` · best-effort
+rate-limit · create submission) → `runAudit` (`lib/audit/run.ts`: free-fetch scrape → `scoreSite` → persist
+site_audit + audit_scores + a PRIVATE certificate; dedup supersedes any prior active cert for the domain; scrape
+failures record `failed`/`incomplete`, never a 0-score) → magic-link email (`lib/email/send.ts`, Resend REST,
+**env-gated** — logs the link if `RESEND_API_KEY` unset) → `GET /api/confirm` (verify HMAC token → confirm email →
+set httpOnly `report_access` cookie → redirect) → `/report/[id]` (**cookie-gated** private report: composite, tier,
+per-pillar readiness, punch list, "not a citation prediction" disclaimer). Also migrated `api/score.ts` →
+`app/api/score/route.ts` **and added the SSRF guard there** (closes the live SSRF hole the review flagged).
+New: `lib/db/{client,repo,types}.ts` (typed, `AuditStore` injectable), `lib/security/{url,ratelimit}.ts`,
+`lib/tokens.ts`, `lib/email/send.ts`, `supabase/migrations/0001_init.sql` (5 tables + private `raw-scrapes` bucket +
+deny-by-default RLS). Tests added: url/SSRF (11), tokens (5), audit runner (3).
+
+**BLOCKERS before it runs end-to-end (need Matt / infra):**
+1. **Supabase not provisioned** — MCP requires org + free-tier cost confirm. Migration is ready to apply.
+2. **Email not live** — needs `RESEND_API_KEY` + an authenticated sending domain (SPF/DKIM/DMARC).
+3. Set env: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MAGIC_LINK_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
+   `NEXT_PUBLIC_APP_URL`.
+4. **Vercel project settings** still `framework:null` / `outputDirectory:public` — flip to Next.js before deploy.
+
+**NEXT:** provision Supabase → set env → run E2E (submit→confirm→report) → Phase 1b (ownership verify → public
+`/verify/[slug]` + badge). Calibration gate (finalize 60/80 thresholds) can run in parallel. `raw-scrapes` Storage
+write + GDPR `/api/me` purge, real rate-limit/queue + CAPTCHA, and monitoring are Phase 1c.
 
 ## ⭐ SESSION 2026-07-12 — RECALIBRATION COMMITTED (reconciled; deploy via CLI)
 Matt locked the two gating decisions: (a) **score label = keep the "LLM Visibility™ Score" mark**, with the
