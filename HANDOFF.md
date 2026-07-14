@@ -2,6 +2,30 @@
 
 Last updated: 2026-07-13 (session 4 — Phase 1a + 1b built; Supabase provisioned). Read this first when resuming. Built with **gstack** — keep using it.
 
+## ▶ RESUME HERE — next session (priority order)
+State: recalibration landed (committed + deployed); **Phase 1a + 1b built** (submit → audit → magic-link → private
+report → ownership-gated public cert + badge). tsc clean · **124 tests** · `next build` green · committed + pushed
+(**HEAD `c00df14`**). **Supabase provisioned** (`vhhgykgigcbbxuqeuyyc`, schema applied). App is NOT deployed.
+
+1. **Run the live E2E — blocked only on one secret.** Paste the Supabase **service_role** key into `.env` as
+   `SUPABASE_SERVICE_ROLE_KEY` (Dashboard → Project Settings → API), then `npm run dev` → submit a URL at `/` → the
+   magic link **prints to the server console** (no email provider yet) → open it → `/report/[id]` → "Make this public".
+   Fix whatever surfaces. No email account needed for this test.
+2. **Phase 1c — hardening:** `/methodology` (categories, NOT weights) · `/privacy` + `/api/me` GDPR delete (must also
+   purge the `raw-scrapes` Storage object, not just rows) · durable rate-limit + daily cap + queue + CAPTCHA
+   (email-abuse) · production monitoring/alerting (uptime, worker failures, email bounce).
+3. **Calibration gate (parallelizable):** approve a ~30–50-site list → `npm run score:batch` → finalize the 60/80 tier
+   + maturity-rung cutoffs off the distribution → add a golden-file rank-order regression test.
+4. **Go-live plumbing:** paste the approved TM legal line (independent, under Matt) · flip the Vercel project from
+   static (`framework:null`/`outputDirectory:public`) to Next.js · reconnect Git→Vercel auto-deploy · then the
+   Cloudflare→Vercel apex DNS cutover (HIGH-RISK; documented rollback; WP archive exists).
+5. **Email (before public launch):** Resend key + authenticated sending domain (SPF/DKIM/DMARC).
+6. **Pre-launch:** git-history scrub for ever-committed `.private/`; flip repo private; TM clearance (not just wording);
+   reciprocal `sameAs` on matthewbertram.com / ewrdigital / bestseopodcast for the @graph entity weld.
+
+Blocked-on-Matt: service_role key (E2E) · calibration site list · email provider+domain · TM legal string ·
+Cloudflare/registrar control. Full narrative in the session notes below.
+
 ## ⭐ SESSION 2026-07-13 (cont.) — PHASE 1b PUBLIC CREDENTIAL + SUPABASE PROVISIONED
 **Supabase is live:** project `llm-visibility-certification` (ref `vhhgykgigcbbxuqeuyyc`, org MBL – Personal, us-east-1,
 $0/mo). Migration `init_llm_visibility_cert_v1` applied — all 5 tables present + RLS on, `raw-scrapes` bucket created.
